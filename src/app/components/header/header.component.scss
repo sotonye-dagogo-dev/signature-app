@@ -1,0 +1,32 @@
+.header {
+    @apply fixed top-0 w-full bg-white dark:bg-gray-800 py-4 border-b border-gray-200 dark:border-gray-700;
+
+    .header-content {
+      @apply container mx-auto px-4 flex justify-between items-center;
+
+      h1 {
+        @apply text-2xl font-bold text-gray-800 dark:text-white;
+      }
+    }
+  }
+
+
+.header {
+  @apply w-full bg-white dark:bg-gray-800 shadow-md;
+
+  nav {
+    @apply max-w-7xl mx-auto px-4 py-4 flex justify-between items-center;
+  }
+
+  .logo {
+    @apply flex items-center space-x-2 text-primary hover:text-primary-hover transition-colors;
+
+    fa-icon {
+      @apply text-xl;
+    }
+
+    span {
+      @apply font-bold text-lg;
+    }
+  }
+}

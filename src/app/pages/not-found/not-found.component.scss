@@ -1,0 +1,16 @@
+.not-found {
+    @apply flex flex-col items-center justify-center min-h-[60vh] text-center;
+
+    h1 {
+      @apply text-6xl font-bold text-gray-900 dark:text-white mb-4;
+    }
+
+    p {
+      @apply text-xl text-gray-600 dark:text-gray-300 mb-8;
+    }
+
+    .home-link {
+      @apply px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors;
+    }
+  }
+

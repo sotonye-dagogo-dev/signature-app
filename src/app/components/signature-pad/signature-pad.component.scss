@@ -1,0 +1,46 @@
+/* Component specific styles can go here if needed */
+
+.signature-container {
+  @apply w-full h-full relative border border-gray-300 rounded-lg bg-white;
+}
+
+.signature-canvas {
+  @apply w-full h-full touch-none  cursor-crosshair;
+}
+
+.signature-pad-container {
+  @apply flex flex-col items-center gap-4 w-full max-w-2xl mx-auto p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg;
+}
+
+.signature-pad {
+  @apply w-full border-2 border-gray-300 dark:border-gray-600 rounded-lg touch-none;
+  aspect-ratio: 16/9;
+}
+
+.controls {
+  @apply flex gap-4 w-full justify-center;
+}
+
+.control-button {
+  @apply px-4 py-2 rounded-md text-sm font-medium transition-colors;
+
+  &.clear {
+    @apply bg-red-500 text-white hover:bg-red-600;
+  }
+
+  &.save {
+    @apply bg-blue-500 text-white hover:bg-blue-600;
+  }
+}
+
+.control-btn {
+  @apply flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors;
+
+  fa-icon {
+    @apply text-lg;
+  }
+
+  span {
+    @apply text-sm font-medium;
+  }
+}

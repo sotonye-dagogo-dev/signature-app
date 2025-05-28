@@ -1,0 +1,8 @@
+.footer {
+    @apply fixed bottom-0 w-full bg-white dark:bg-gray-800 py-4 text-center border-t border-gray-200 dark:border-gray-700;
+
+    p {
+      @apply text-gray-600 dark:text-gray-300;
+    }
+  }
+

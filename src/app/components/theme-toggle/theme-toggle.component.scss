@@ -1,0 +1,8 @@
+.theme-toggle {
+    @apply p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+
+    fa-icon {
+      @apply text-gray-600 dark:text-gray-300 text-xl;
+    }
+  }
+

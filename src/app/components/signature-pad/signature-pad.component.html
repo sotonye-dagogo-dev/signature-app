@@ -1,0 +1,13 @@
+<div class="signature-pad-container">
+    <canvas #signaturePad class="signature-pad"></canvas>
+    <div class="controls">
+        <button class="control-btn" (click)="clear()" title="Clear signature">
+            <fa-icon [icon]="faTrash"></fa-icon>
+            <span>Clear</span>
+        </button>
+        <button class="control-btn" (click)="download()" title="Download signature">
+            <fa-icon [icon]="faDownload"></fa-icon>
+            <span>Download</span>
+        </button>
+    </div>
+</div>
