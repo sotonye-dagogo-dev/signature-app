@@ -1,5 +1,44 @@
+@import "styles/variables";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+
+    &-primary {
+      @apply bg-primary text-white hover:bg-primary-hover;
+    }
+
+    &-secondary {
+      @apply bg-secondary text-white hover:bg-secondary-hover;
+    }
+
+    &-error {
+      @apply bg-error text-white hover:bg-error-dark;
+    }
+
+    &-success {
+      @apply bg-success text-white hover:bg-success-dark;
+    }
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6;
+  }
+
+  .input {
+    @apply px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+    focus:ring-2 focus:ring-primary focus:border-transparent 
+    dark:bg-gray-700 dark:text-white;
+  }
+}
 
 /* You can add global styles to this file, and also import other style files */

@@ -1,0 +1,58 @@
+// Color System
+$colors: (
+  primary: (
+    light: #66bb6a,
+    base: #4caf50,
+    dark: #388e3c
+  ),
+  secondary: (
+    light: #90a4ae,
+    base: #607d8b,
+    dark: #455a64
+  ),
+  success: (
+    light: #81c784,
+    base: #4caf50,
+    dark: #388e3c
+  ),
+  error: (
+    light: #e57373,
+    base: #f44336,
+    dark: #d32f2f
+  ),
+  warning: (
+    light: #ffd54f,
+    base: #ffc107,
+    dark: #ffa000
+  ),
+  info: (
+    light: #64b5f6,
+    base: #2196f3,
+    dark: #1976d2
+  ),
+  gray: (
+    50: #f8fafc,
+    100: #f1f5f9,
+    200: #e2e8f0,
+    300: #cbd5e1,
+    400: #94a3b8,
+    500: #64748b,
+    600: #475569,
+    700: #334155,
+    800: #1e293b,
+    900: #0f172a
+  )
+);
+
+// Typography
+$font-sizes: (
+  xs: 0.75rem,
+  sm: 0.875rem,
+  base: 1rem,
+  lg: 1.125rem,
+  xl: 1.25rem,
+  '2xl': 1.5rem,
+  '3xl': 1.875rem,
+  '4xl': 2.25rem,
+  '5xl': 3rem
+);
