@@ -1,7 +1,64 @@
 <header class="header">
     <div class="header-content">
-        <h1>SignaturePad</h1>
-        <app-theme-toggle></app-theme-toggle>
+        <div class="brand">
+            <h1>SignaturePad</h1>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="nav-menu" #navMenu>
+            <div class="nav-items">
+                @for (link of visibleLinks; track link.path) {
+                <a [routerLink]="link.path" routerLinkActive="active" class="nav-link">
+                    {{link.label}}
+                </a>
+                }
+            </div>
+
+            <!-- Overflow Menu -->
+            @if (isOverflowChecked && overflowLinks.length > 0) {
+            <div class="overflow-menu">
+                <button type="button" #overflowButton class="overflow-button" (click)="toggleOverflowMenu($event)">
+                    More
+                    <svg class="w-4 h-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+                @if (isOverflowMenuOpen) {
+                <div class="overflow-content">
+                    @for (link of overflowLinks; track link.path) {
+                    <a [routerLink]="link.path" routerLinkActive="active" class="nav-link">
+                        {{link.label}}
+                    </a>
+                    }
+                </div>
+                }
+            </div>
+            }
+        </nav>
+
+        <!-- Mobile Menu Button -->
+        <button type="button" class="menu-button" (click)="toggleMobileMenu()">
+            <span class="sr-only">Open menu</span>
+            <!-- You can add an icon here -->
+            Menu
+        </button>
+
+        <!-- Mobile Navigation -->
+        <div class="mobile-menu" [class.closed]="!isMobileMenuOpen" (click)="toggleMobileMenu()">
+            <div class="menu-content" [class.closed]="!isMobileMenuOpen" (click)="$event.stopPropagation()">
+                @for (link of navLinks; track link.path) {
+                <a [routerLink]="link.path" routerLinkActive="active" class="nav-link block py-2"
+                    (click)="toggleMobileMenu()">
+                    {{link.label}}
+                </a>
+                }
+            </div>
+        </div>
+
+        <div class="actions">
+            <app-theme-toggle></app-theme-toggle>
+        </div>
     </div>
 </header>
-<p>header works!</p>

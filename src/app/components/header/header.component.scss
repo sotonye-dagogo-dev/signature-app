@@ -1,15 +1,79 @@
 .header {
-    @apply fixed top-0 w-full bg-white dark:bg-gray-800 py-4 border-b border-gray-200 dark:border-gray-700;
+  @apply fixed top-0 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50;
 
-    .header-content {
-      @apply container mx-auto px-4 flex justify-between items-center;
+  .header-content {
+    @apply container mx-auto p-4 flex justify-between items-center;
+
+    .brand {
+      @apply flex items-center gap-2;
 
       h1 {
         @apply text-2xl font-bold text-gray-800 dark:text-white;
       }
     }
-  }
 
+    .nav-menu {
+      @apply hidden md:flex items-center flex-1 justify-center max-w-2xl mx-8;
+
+      .nav-items {
+        @apply flex items-center gap-6 w-full justify-center;
+      }
+
+      .nav-link {
+        @apply text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap;
+
+        &.active {
+          @apply text-primary dark:text-primary-light bg-primary-light/10;
+        }
+      }
+    }
+
+    .mobile-menu {
+      @apply md:hidden fixed inset-0 bg-gray-900/50 z-50 transition-opacity duration-200;
+
+      &.closed {
+        @apply opacity-0 pointer-events-none;
+      }
+
+      .menu-content {
+        @apply absolute right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 p-4 transform transition-transform duration-200;
+
+        &.closed {
+          @apply translate-x-full;
+        }
+      }
+    }
+
+    .overflow-menu {
+      @apply relative ml-2;
+
+      // Only show overflow menu if it has items
+      &:empty {
+        @apply hidden;
+      }
+
+      .overflow-button {
+        @apply flex items-center px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light rounded-md text-sm font-medium;
+      }
+
+      .overflow-content {
+        @apply absolute right-0 mt-2 py-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 flex flex-col;
+
+        .nav-link {
+          @apply px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700;
+        }
+      }
+    }
+
+    .menu-button {
+      @apply md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md;
+    }
+
+    .actions {
+      @apply flex items-center gap-4;
+    }
+  }
+}
 
 .header {
   @apply w-full bg-white dark:bg-gray-800 shadow-md;

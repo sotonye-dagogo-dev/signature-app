@@ -39,6 +39,24 @@
     focus:ring-2 focus:ring-primary focus:border-transparent 
     dark:bg-gray-700 dark:text-white;
   }
+
+  .spinner {
+    @apply inline-block w-4 h-4;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+}
+
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* You can add global styles to this file, and also import other style files */

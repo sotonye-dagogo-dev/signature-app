@@ -1,0 +1,80 @@
+.bluetooth-control {
+  @apply p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg;
+
+  .header {
+    @apply flex justify-between items-center mb-6;
+
+    .title {
+      @apply text-xl font-semibold dark:text-white;
+    }
+
+    .bluetooth-icon {
+      @apply w-5 h-5 text-current;
+      transition: transform 0.2s ease;
+      
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+
+    .scan-btn {
+      @apply inline-flex items-center gap-2;
+      
+      &:disabled .bluetooth-icon {
+        @apply opacity-50;
+      }
+    }
+  }
+
+  .device-lists {
+    @apply space-y-6;
+
+    .device-section {
+      @apply space-y-2;
+
+      h3 {
+        @apply text-sm font-medium text-gray-500 dark:text-gray-400;
+      }
+
+      .device-list {
+        @apply space-y-2;
+
+        .device-item {
+          @apply flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg;
+
+          &.connected {
+            @apply bg-primary-light/10 dark:bg-primary-dark/10;
+          }
+
+          .device-name {
+            @apply font-medium dark:text-white;
+          }
+
+          .status-icon {
+            @apply text-success;
+          }
+
+          .connect-btn {
+            @apply btn btn-primary text-sm;
+          }
+
+          .disconnect-btn {
+            @apply btn btn-error text-sm;
+          }
+
+          .pair-btn {
+            @apply btn btn-secondary text-sm;
+          }
+        }
+      }
+
+      .no-devices {
+        @apply text-sm text-gray-500 dark:text-gray-400 italic;
+      }
+    }
+  }
+
+  .error-message {
+    @apply mt-4 p-3 bg-error-light text-error-dark rounded-lg text-sm;
+  }
+}

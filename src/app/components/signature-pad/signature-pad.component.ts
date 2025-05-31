@@ -14,11 +14,17 @@ import { faTrash, faDownload } from '@fortawesome/free-solid-svg-icons';
 export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   @ViewChild('signaturePad') signaturePadElement!: ElementRef;
   private signaturePad!: SignaturePad;
-  private ratio = Math.max(window.devicePixelRatio || 1, 1);
+  private ratio = 1;
   faTrash = faTrash;
   faDownload = faDownload;
 
-    constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    if (isPlatformBrowser(this.platformId)) {
+      this.ratio = Math.max(window.devicePixelRatio || 1, 1);
+    }
+  }
 
   ngAfterViewInit() {
     if (isPlatformBrowser(this.platformId)) {

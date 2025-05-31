@@ -1,1 +1,78 @@
-<p>bluetooth-control works!</p>
+<div class="bluetooth-control">
+      <div class="header">
+        <h2 class="title">Bluetooth Devices</h2>
+        <button type="button" class="scan-btn" (click)="startScanning()" [disabled]="(isScanning$ | async) === true">
+          <svg xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            class="bluetooth-icon" 
+            width="24" 
+            height="24">
+            <path [attr.d]="bluetoothIconPath" 
+                fill="currentColor"/>
+        </svg>
+        <span>{{ (isScanning$ | async) ? 'Scanning...' : 'Scan' }}</span>
+        <fa-icon *ngIf="isScanning$ | async" [icon]="faSpinner" class="spinner"></fa-icon>
+        </button>
+      </div>
+
+      <!-- Device Lists -->
+      <div class="device-lists">
+        <!-- Connected Devices -->
+        <section class="device-section">
+          <h3>Connected</h3>
+          <div class="device-list">
+            @if (connectedDevice$ | async; as device) {
+              <div class="device-item connected">
+                <span class="device-name">{{ device.name }}</span>
+                <fa-icon [icon]="faCheck" class="status-icon"></fa-icon>
+                <button class="disconnect-btn" (click)="disconnect(device)">
+                  Disconnect
+                </button>
+              </div>
+            } @else {
+              <p class="no-devices">No connected devices</p>
+            }
+          </div>
+        </section>
+
+        <!-- Paired Devices -->
+        <section class="device-section">
+          <h3>Paired</h3>
+          <div class="device-list">
+            @for (device of pairedDevices$ | async; track device.id) {
+              <div class="device-item">
+                <span class="device-name">{{ device.name }}</span>
+                <button class="connect-btn" (click)="connect(device)">
+                  Connect
+                </button>
+              </div>
+            } @empty {
+              <p class="no-devices">No paired devices</p>
+            }
+          </div>
+        </section>
+
+        <!-- Available Devices -->
+        <section class="device-section">
+          <h3>Available</h3>
+          <div class="device-list">
+            @for (device of availableDevices$ | async; track device.id) {
+              <div class="device-item">
+                <span class="device-name">{{ device.name }}</span>
+                <button class="pair-btn" (click)="pair(device)">
+                  Pair
+                </button>
+              </div>
+            } @empty {
+              <p class="no-devices">No available devices</p>
+            }
+          </div>
+        </section>
+      </div>
+
+      @if (error$ | async; as error) {
+        <div class="error-message">
+          {{ error }}
+        </div>
+      }
+    </div>

@@ -1,1 +1,69 @@
-<p>device-setup works!</p>
+<div class="device-setup">
+    <div class="setup-grid">
+        <!-- Bluetooth Control Section -->
+        <div class="col-span-1">
+            <app-bluetooth-control></app-bluetooth-control>
+        </div>
+
+        <!-- Arduino Configuration Section -->
+        <div class="col-span-1">
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-4">Arduino Configuration</h2>
+
+                <div class="flex flex-col gap-4">
+                    <!-- Status Display -->
+                    <div class="status-display">
+                        <span class="label">Device Status</span>
+                        <span class="value" [class.ready]="(arduinoStatus$ | async)?.isReady"
+                            [class.not-ready]="!(arduinoStatus$ | async)?.isReady">
+                            {{ (arduinoStatus$ | async)?.currentOperation || 'Not Connected' }}
+                        </span>
+                    </div>
+
+                    <!-- Device Controls -->
+                    <div class="device-controls">
+                        <!-- Test Connection -->
+                        <button type="button" class="test-btn" [disabled]="!(arduinoStatus$ | async)?.isReady"
+                            (click)="testConnection()">
+                            Test Connection
+                        </button>
+
+                        <!-- Reset Device -->
+                        <button type="button" class="reset-btn" [disabled]="!(arduinoStatus$ | async)?.isReady"
+                            (click)="resetDevice()">
+                            Reset Device
+                        </button>
+                    </div>
+
+                    <!-- Error Display -->
+                    @if ((arduinoStatus$ | async)?.error; as error) {
+                    <div class="error-alert">
+                        {{ error }}
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Configuration Options -->
+            <div class="config-section">
+                <h3 class="title">Configuration Options</h3>
+                <form class="form" [formGroup]="configForm" (ngSubmit)="saveConfiguration()">
+                    <div class="form-group">
+                        <label class="label" for="baudRate">Baud Rate</label>
+                        <select id="baudRate" formControlName="baudRate" class="input-field">
+                            <option value="9600">9600</option>
+                            <option value="19200">19200</option>
+                            <option value="57600">57600</option>
+                            <option value="115200">115200</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn"
+                        [disabled]="!configForm.valid || !(arduinoStatus$ | async)?.isReady">
+                        Save Configuration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

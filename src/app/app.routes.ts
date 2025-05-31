@@ -14,11 +14,11 @@ export const routes: Routes = [
         component: HomeComponent
     },
     {
-        path: '**',
-        component: NotFoundComponent
-    },
-    {
         path: 'device-setup',
         component: DeviceSetupComponent
+    },
+    {
+        path: '**',
+        component: NotFoundComponent
     }
 ];

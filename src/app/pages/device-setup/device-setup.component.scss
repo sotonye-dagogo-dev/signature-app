@@ -1,0 +1,65 @@
+.device-setup {
+  @apply mx-auto px-4 py-8;
+
+  .setup-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-8;
+  }
+}
+
+.status-display {
+  @apply flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 rounded-lg;
+
+  .label {
+    @apply font-medium;
+  }
+
+  .value {
+    &.ready {
+      @apply text-success;
+    }
+    &.not-ready {
+      @apply text-error;
+    }
+  }
+}
+
+.device-controls {
+  @apply mt-4;
+
+  .test-btn {
+    @apply btn btn-primary w-full;
+  }
+
+  .reset-btn {
+    @apply btn btn-secondary w-full mt-2;
+  }
+}
+
+.error-alert {
+  @apply bg-error-light text-error-dark p-4 rounded-lg mt-4;
+}
+
+.config-section {
+  @apply mt-8;
+
+  .title {
+    @apply text-lg font-semibold mb-4;
+  }
+
+  .form {
+    @apply flex flex-col gap-4;
+
+    .form-group {
+      .label {
+        @apply block text-sm font-medium mb-1;
+      }
+      .input-field {
+        @apply input w-full;
+      }
+    }
+
+    .submit-btn {
+      @apply btn btn-primary mt-4;
+    }
+  }
+}
