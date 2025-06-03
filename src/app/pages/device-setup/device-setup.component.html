@@ -62,6 +62,20 @@
                         [disabled]="!configForm.valid || !(arduinoStatus$ | async)?.isReady">
                         Save Configuration
                     </button>
+                    <!---->
+                    <div class="command-controls mt-4">
+                        <button type="button" class="command-btn"
+                                [disabled]="!(arduinoStatus$ | async)?.isReady"
+                                (click)="sendCommand('START')">
+                            Start Sequence
+                        </button>
+                        <button type="button" class="command-btn"
+                                [disabled]="!(arduinoStatus$ | async)?.isReady"
+                                (click)="sendCommand('STOP')">
+                            Stop Sequence
+                        </button>
+                    </div>
+                    <!---->
                 </form>
             </div>
         </div>

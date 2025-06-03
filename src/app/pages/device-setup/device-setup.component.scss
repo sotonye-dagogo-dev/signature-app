@@ -63,3 +63,24 @@
     }
   }
 }
+/**/
+.command-controls {
+    display: flex;
+    gap: 1rem;
+    
+    .command-btn {
+        @apply btn flex-1;
+        background-color: #2196F3;
+        color: white;
+        padding: 0.5rem;
+        border-radius: 4px;
+        
+        &:disabled {
+            @apply opacity-50 cursor-not-allowed;
+        }
+        
+        &:last-child {
+            background-color: #f44336;
+        }
+    }
+}

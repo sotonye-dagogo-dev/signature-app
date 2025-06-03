@@ -26,7 +26,7 @@ export class DeviceSetupComponent {
   ) {
     this.arduinoStatus$ = this.arduinoService.status$;
     this.configForm = this.fb.group({
-      baudRate: [115200, [Validators.required]],
+      baudRate: [9600, [Validators.required]],
       });
   }
 
@@ -56,5 +56,15 @@ export class DeviceSetupComponent {
         console.error('Failed to save configuration:', error);
       }
     }
+  }
+
+    // experimentall method
+  async sendCommand(command: string) {
+      try {
+          await this.arduinoService.sendCommand(command);
+          console.log(`Command ${command} sent successfully`);
+      } catch (error) {
+          console.error(`Failed to send command ${command}:`, error);
+      }
   }
 }
