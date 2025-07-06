@@ -1,0 +1,84 @@
+<div class="submission-form">
+    <!-- SVG Preview -->
+    <div class="preview-section">
+        <h3 class="preview-title">Signature Preview</h3>
+        <div class="preview-container">
+            @if (hasSvgData) {
+                <div class="svg-preview" [innerHTML]="sanitizedSvgData"></div>
+            } @else {
+                <div class="no-signature-placeholder">
+                    <p>No signature provided</p>
+                    <small>The signature preview will appear here once you create one</small>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="onFormSubmit()" class="form">
+        @for (field of formFields; track field.name) {
+        <div class="form-group">
+            @if (field.type === 'text' || field.type === 'email') {
+            <!-- Text and Email Fields -->
+            <label [for]="field.name" class="form-label">
+                {{ field.label }}@if (field.required) { * }
+            </label>
+            <input [id]="field.name" [type]="field.type" [formControlName]="field.name" class="form-input"
+                [class.error]="isFieldInvalid(field.name)" [placeholder]="field.placeholder || ''" />
+            } @else if (field.type === 'select') {
+            <!-- Select Fields -->
+            <label [for]="field.name" class="form-label">
+                {{ field.label }}@if (field.required) { * }
+            </label>
+            <select [id]="field.name" [formControlName]="field.name" class="form-select"
+                [class.error]="isFieldInvalid(field.name)" [disabled]="field.name === 'department' && !selectedFaculty">
+                <option value="">{{ getSelectPlaceholder(field.name) }}</option>
+                @for (option of getFieldOptions(field.name); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+                }
+            </select>
+            } @else if (field.type === 'checkbox') {
+            <!-- Checkbox Field -->
+            <div class="checkbox-group">
+                <input [id]="field.name" type="checkbox" [formControlName]="field.name" class="form-checkbox"
+                    [class.error]="isFieldInvalid(field.name)" />
+                <label [for]="field.name" class="checkbox-label">
+                    {{ field.label }}@if (field.required) { * }
+                </label>
+            </div>
+            }
+
+            @if (getFieldError(field.name)) {
+            <span class="error-message">{{ getFieldError(field.name) }}</span>
+            }
+        </div>
+        }
+
+        <!-- Add feedback display before submit button -->
+        <app-feedback-display 
+            *ngIf="showFeedback && feedbackConfig"
+            [config]="feedbackConfig"
+            [visible]="showFeedback"
+            (onAction)="onFeedbackAction($event)"
+            (onClose)="onFeedbackClose()">
+        </app-feedback-display>
+
+        <!-- Submit Section -->
+        <div class="submit-section">
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="button" class="cancel-button" (click)="onCancelClick()" [disabled]="isSubmitting">
+                    Cancel
+                </button>
+                <button type="submit" class="submit-button" [disabled]="isSubmitting">
+                    @if (isSubmitting) {
+                    <span class="spinner"></span>
+                    Submitting...
+                    } @else {
+                    Submit Signature
+                    }
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

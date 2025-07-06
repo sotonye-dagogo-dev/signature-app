@@ -1,13 +1,47 @@
 <div class="signature-pad-container card">
     <canvas #signaturePad class="signature-pad"></canvas>
     <div class="controls">
-        <button class="control-btn" (click)="clear()" title="Clear signature">
+        <button class="control-btn undo" 
+                (click)="undo()" 
+                [disabled]="!canUndo()"
+                title="Undo last stroke">
+            <fa-icon [icon]="faUndo"></fa-icon>
+            <span>Undo</span>
+        </button>
+        <button class="control-btn redo" 
+                (click)="redo()" 
+                [disabled]="!canRedo()"
+                title="Redo last undone stroke">
+            <fa-icon [icon]="faRedo"></fa-icon>
+            <span>Redo</span>
+        </button>
+        <button class="control-btn clear" (click)="clear()" title="Clear signature">
             <fa-icon [icon]="faTrash"></fa-icon>
             <span>Clear</span>
         </button>
-        <button class="control-btn" (click)="download()" title="Download signature">
+        <button class="control-btn convert" (click)="convertToGCode()" title="Convert to G-Code">
+            <fa-icon [icon]="faCode"></fa-icon>
+            <span>G-Code</span>
+        </button>
+        <button class="control-btn submit" (click)="submit()" title="Submit signature">
+            <fa-icon [icon]="faPaperPlane"></fa-icon>
+            <span>Submit</span>
+        </button>
+        <button class="control-btn download" (click)="download()" title="Download signature">
             <fa-icon [icon]="faDownload"></fa-icon>
             <span>Download</span>
         </button>
     </div>
 </div>
+
+<!-- G-Code Feedback Modal -->
+<app-feedback-display *ngIf="showGCodeFeedback && gcodeFeedbackConfig" [config]="gcodeFeedbackConfig"
+    [visible]="showGCodeFeedback" (onAction)="onGCodeAction($event)" (onClose)="onGCodeFeedbackClose()">
+</app-feedback-display>
+
+<!-- Submission Modal -->
+<app-modal [isOpen]="isSubmissionModalOpen" title="Submit Your Signature" size="lg" (onClose)="onSubmissionCancel()">
+    <app-signature-submission-form [svgData]="currentSvgData" (uponSubmit)="onSubmissionComplete($event)"
+        (onCancel)="onSubmissionCancel()">
+    </app-signature-submission-form>
+</app-modal>

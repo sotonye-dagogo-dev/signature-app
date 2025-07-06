@@ -21,6 +21,10 @@
       @apply bg-secondary text-white hover:bg-secondary-hover;
     }
 
+    &-info {
+      @apply bg-info text-white hover:bg-info-dark;
+    }
+
     &-error {
       @apply bg-error text-white hover:bg-error-dark;
     }

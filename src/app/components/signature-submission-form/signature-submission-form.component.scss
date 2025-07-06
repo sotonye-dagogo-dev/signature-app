@@ -1,0 +1,72 @@
+.submission-form {
+  @apply space-y-6;
+}
+
+.preview-section {
+  @apply text-center;
+
+  .preview-title {
+    @apply text-lg font-medium text-gray-900 dark:text-white mb-3;
+  }
+
+  .preview-container {
+    @apply bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600;
+
+    .signature-preview {
+      @apply max-w-full h-auto max-h-32 mx-auto;
+    }
+  }
+}
+
+.form {
+  @apply space-y-4;
+
+  .form-group {
+    @apply space-y-2;
+
+    .form-label {
+      @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+    }
+
+    .form-input,
+    .form-select {
+      @apply input w-full;
+
+      &.error {
+        @apply border-error ring-error;
+      }
+    }
+
+    .checkbox-group {
+      @apply flex items-start gap-2;
+
+      .form-checkbox {
+        @apply mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded;
+
+        &.error {
+          @apply border-error;
+        }
+      }
+
+      .checkbox-label {
+        @apply text-sm text-gray-700 dark:text-gray-300 leading-5;
+      }
+    }
+
+    .error-message {
+      @apply text-sm text-error;
+    }
+  }
+
+  .form-actions {
+    @apply flex gap-3 pt-4;
+
+    .cancel-button {
+      @apply btn btn-secondary flex-1;
+    }
+
+    .submit-button {
+      @apply btn btn-primary flex-1 flex items-center justify-center gap-2;
+    }
+  }
+}

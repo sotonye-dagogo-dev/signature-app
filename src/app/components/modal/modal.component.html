@@ -1,0 +1,18 @@
+@if (isOpen) {
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+    <div class="modal-container" [class]="'modal-' + size">
+        <div class="modal-header">
+            <h2 class="modal-title">{{ title }}</h2>
+            @if (closable) {
+            <button type="button" class="close-button" (click)="close()">
+                <fa-icon [icon]="faTimes">x</fa-icon>
+            </button>
+            }
+        </div>
+
+        <div class="modal-body">
+            <ng-content></ng-content>
+        </div>
+    </div>
+</div>
+}

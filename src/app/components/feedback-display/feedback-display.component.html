@@ -1,0 +1,96 @@
+<div [class]="containerClass" *ngIf="visible">
+    <!-- Modal backdrop for modal position -->
+    <div *ngIf="config.position === 'modal'" class="modal-backdrop" (click)="close()"></div>
+
+    <!-- Main content container -->
+    <div class="feedback-content" [class.modal-content]="config.position === 'modal'">
+        <!-- Close button -->
+        <button *ngIf="config.showCloseButton" type="button" class="close-btn" (click)="close()">
+            <fa-icon [icon]="faTimes">x</fa-icon>
+        </button>
+
+        <!-- Icon section -->
+        <div class="icon-section" *ngIf="config.type !== 'custom'">
+            <fa-icon *ngIf="config.type === 'loading'" [icon]="faSpinner" [class]="iconClass + ' spinner'"></fa-icon>
+            <fa-icon *ngIf="config.type === 'success'" [icon]="faCheck" [class]="iconClass"></fa-icon>
+            <fa-icon *ngIf="config.type === 'error'" [icon]="faTimes" [class]="iconClass"></fa-icon>
+            <fa-icon *ngIf="config.type === 'warning'" [icon]="faExclamationTriangle" [class]="iconClass"></fa-icon>
+            <fa-icon *ngIf="config.type === 'info'" [icon]="faInfo" [class]="iconClass"></fa-icon>
+        </div>
+
+        <!-- Message section -->
+        <div class="message-section">
+            <h3 *ngIf="config.message" class="main-message">{{ config.message }}</h3>
+            <p *ngIf="config.subMessage" class="sub-message">{{ config.subMessage }}</p>
+        </div>
+
+        <!-- Progress bar for progress type -->
+        <div *ngIf="config.type === 'progress'" class="progress-section">
+            <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="progressPercentage">
+                </div>
+            </div>
+            <span class="progress-text">{{ progressPercentage }}%</span>
+        </div>
+
+        <!-- Timer display for timer type -->
+        <div *ngIf="config.type === 'timer'" class="timer-section">
+            <div class="timer-display">{{ timerDisplay }}</div>
+        </div>
+
+        <!-- Custom content section -->
+        <div *ngIf="config.type === 'custom' && config.data" class="custom-section">
+            <!-- G-code display -->
+            <div *ngIf="config.data.type === 'gcode'" class="gcode-display">
+                <div class="gcode-header">
+                    <h4>Generated G-Code</h4>
+                    <div class="gcode-meta">
+                        <span>Lines: {{ config.data.metadata?.gcode_lines || 0 }}</span>
+                        <span>Size: {{ (config.data.metadata?.gcode_size || 0) / 1024 | number:'1.1-1' }}KB</span>
+                    </div>
+                </div>
+                <div class="gcode-content">
+                    <pre>{{ config.data.gcode }}</pre>
+                </div>
+                <div class="gcode-actions">
+                    <button type="button" class="btn btn-primary" (click)="copyToClipboard(config.data.gcode)">
+                        <fa-icon [icon]="faCopy"></fa-icon>
+                        Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+
+            <!-- SSIM results -->
+            <div *ngIf="config.data.type === 'ssim'" class="ssim-display">
+                <div class="score-circle">
+                    <div class="score-value">{{ config.data.similarity_percentage | number:'1.1-1' }}%</div>
+                    <div class="score-label">Similarity</div>
+                </div>
+                <div class="score-details">
+                    <p>SSIM Score: {{ config.data.ssim_score | number:'1.3-3' }}</p>
+                </div>
+            </div>
+
+            <!-- Smoothness results -->
+            <div *ngIf="config.data.type === 'smoothness'" class="smoothness-display">
+                <div class="quality-badge" [class]="'quality-' + config.data.quality_rating.toLowerCase()">
+                    {{ config.data.quality_rating }}
+                </div>
+                <div class="smoothness-meter">
+                    <div class="meter-fill" [style.width.%]="config.data.smoothness_percentage">
+                    </div>
+                </div>
+                <p>Smoothness: {{ config.data.smoothness_percentage | number:'1.1-1' }}%</p>
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div *ngIf="config.showActionButtons && config.actionButtons?.length" class="action-buttons">
+            <button *ngFor="let button of config.actionButtons" type="button"
+                [class]="'btn btn-' + (button.style || 'secondary')" (click)="handleAction(button.action)">
+                <fa-icon *ngIf="button.icon" [icon]="button.icon"></fa-icon>
+                {{ button.label }}
+            </button>
+        </div>
+    </div>
+</div>
