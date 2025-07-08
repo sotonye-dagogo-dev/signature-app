@@ -243,12 +243,6 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
               action: 'download',
               style: 'primary',
               icon: this.faDownload
-            },
-            {
-              label: 'Copy to Clipboard',
-              action: 'copy',
-              style: 'secondary',
-              icon: this.faCode
             }
           ],
           data: {

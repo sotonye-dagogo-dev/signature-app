@@ -9,7 +9,7 @@ describe('SignatureSubmissionFormComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SignatureSubmissionFormComponent]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(SignatureSubmissionFormComponent);
     component = fixture.componentInstance;

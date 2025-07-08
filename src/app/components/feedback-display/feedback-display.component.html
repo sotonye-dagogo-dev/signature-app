@@ -47,8 +47,19 @@
                     <div class="gcode-meta">
                         <span>Lines: {{ config.data.metadata?.gcode_lines || 0 }}</span>
                         <span>Size: {{ (config.data.metadata?.gcode_size || 0) / 1024 | number:'1.1-1' }}KB</span>
+                        <span *ngIf="config.data.metadata?.estimated_duration">Estimated Duration: {{
+                            config.data.metadata.estimated_duration }}</span>
                     </div>
                 </div>
+
+                <!-- Show submission info if available -->
+                <div *ngIf="config.data.submissionInfo" class="submission-info">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                        User ID: {{ config.data.submissionInfo.user_id }} |
+                        Signature ID: {{ config.data.submissionInfo.signature_id }}
+                    </p>
+                </div>
+
                 <div class="gcode-content">
                     <pre>{{ config.data.gcode }}</pre>
                 </div>

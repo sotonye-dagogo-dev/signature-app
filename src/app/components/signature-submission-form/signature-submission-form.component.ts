@@ -61,11 +61,12 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
 
     // Watch for faculty changes to filter departments
     this.form.get('faculty')?.valueChanges.subscribe((faculty: string) => {
-      this.selectedFaculty = faculty;
+      // Update department control state
+      this.formUtilities.updateDepartmentControl(this.form, faculty);
+
+      // Update department options
       if (faculty) {
         this.departmentOptions = this.formUtilities.getDepartmentsByFaculty(faculty);
-        // Reset department when faculty changes
-        this.form.get('department')?.setValue('');
       } else {
         this.departmentOptions = this.formUtilities.getDepartmentOptions();
       }
@@ -90,10 +91,10 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
     if (!this.svgData) {
       return this.sanitizer.bypassSecurityTrustHtml('<p class="no-signature">No signature provided</p>');
     }
-    
+
     // Ensure the SVG has proper dimensions and styling
     let processedSvg = this.svgData;
-    
+
     // If SVG doesn't have width/height, add them
     if (!processedSvg.includes('width=') || !processedSvg.includes('height=')) {
       processedSvg = processedSvg.replace(
@@ -107,7 +108,7 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
         '<svg style="width: 100%; max-width: 400px; height: auto; min-height: 150px; border: 1px solid #e5e7eb; background: white;"'
       );
     }
-    
+
     return this.sanitizer.bypassSecurityTrustHtml(processedSvg);
   }
 
@@ -116,30 +117,100 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
     return !!(this.svgData && this.svgData.trim().toLowerCase().includes('<svg'));
   }
 
+
+  // Check if a control is disabled
+  isControlDisabled(fieldName: string): boolean {
+    const control = this.form.get(fieldName);
+    return control ? control.disabled : false;
+  }
+
   async onFormSubmit() {
     if (this.form.valid && !this.isSubmitting) {
       this.isSubmitting = true;
 
-      const formData = this.form.value;
+      // Get form value including disabled controls
+      const formData = { ...this.form.value, ...this.form.getRawValue() };
+
+      // Prepare submission data - exclude consent field for API
       const submissionData: SignatureSubmissionData = {
-        ...formData,
-        svgData: this.svgData
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        faculty: formData.faculty,
+        department: formData.department,
+        // consent: formData.consent, // Commented out - not sent to API
+        svgData: this.svgData,
+        submittedAt: new Date().toISOString()
       };
 
       try {
-        const success = await this.formUtilities.submitSignatureData(submissionData);
-        if (success) {
-          this.uponSubmit.emit(submissionData);
+        const result = await this.formUtilities.submitSignatureData(submissionData);
+
+        if (result.success && result.result) {
+          // Display success with G-code preview
+          this.feedbackConfig = {
+            type: 'custom',
+            message: 'Submission Successful!',
+            subMessage: result.result.message,
+            size: 'lg',
+            position: 'modal',
+            showCloseButton: true,
+            showActionButtons: true,
+            actionButtons: [
+              {
+                label: 'Download G-Code',
+                action: 'download',
+                style: 'primary',
+                icon: this.FaDownload
+              },
+              {
+                label: 'Close',
+                action: 'close',
+                style: 'secondary'
+              }
+            ],
+            data: {
+              type: 'gcode',
+              gcode: result.result.gcode,
+              metadata: result.result.metadata,
+              submissionInfo: {
+                user_id: result.result.user_id,
+                signature_id: result.result.signature_id
+              }
+            }
+          };
+
+          this.showFeedback = true;
+          console.log('Form submitted successfully:', result.result);
+
+        } else {
+          throw new Error(result.error || 'Submission failed');
         }
       } catch (error) {
         console.error('Submission failed:', error);
+
+        this.feedbackConfig = {
+          type: 'error',
+          message: 'Submission Failed',
+          subMessage: typeof error === 'string' ? error : 'An unexpected error occurred. Please try again.',
+          size: 'md',
+          position: 'inline',
+          showCloseButton: true,
+          autoHide: true,
+          autoHideDelay: 5000
+        };
+
+        this.showFeedback = true;
       } finally {
         this.isSubmitting = false;
       }
     } else {
       // Mark all fields as touched to show validation errors
       Object.keys(this.form.controls).forEach(key => {
-        this.form.get(key)?.markAsTouched();
+        const control = this.form.get(key);
+        if (control && control.enabled) {
+          control.markAsTouched();
+        }
       });
       this.formErrors = this.formUtilities.getFormErrors(this.form);
     }
@@ -224,13 +295,20 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
       this.isSubmitting = true;
       this.gcodeService.resetProgress();
 
+      // Get raw form data but exclude consent for API submission
+      const rawFormData = this.form.getRawValue();
       const formData: SignatureSubmissionData = {
-        ...this.form.value,
+        name: rawFormData.name,
+        email: rawFormData.email,
+        role: rawFormData.role,
+        faculty: rawFormData.faculty,
+        department: rawFormData.department,
+        // consent: rawFormData.consent, // Excluded from API submission
         svgData: this.svgData,
         submittedAt: new Date().toISOString()
       };
 
-      console.log('Starting signature submission:', formData);
+      console.log('Starting signature submission (consent excluded from API data):', formData);
 
       // Convert SVG to G-code
       this.gcodeService.convertSvgToGcode(this.svgData).subscribe({
@@ -266,11 +344,12 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
             }
           };
 
-          // Log complete submission data
+          // Log complete submission data (without consent in API data)
           const completeSubmission = {
             formData,
             gcodeResult: result,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            note: 'Consent field validated locally but excluded from API submission'
           };
 
           console.log('Complete submission data:', completeSubmission);
@@ -306,6 +385,9 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
       case 'send-to-device':
         this.sendToDevice();
         break;
+      case 'close':
+        this.onFeedbackClose();
+        break;
       case 'copied':
         // Show temporary success message
         setTimeout(() => {
@@ -325,7 +407,15 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `signature-gcode-${Date.now()}.gcode`;
+
+      // Include user info in filename if available
+      const userInfo = this.feedbackConfig.data.submissionInfo;
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = userInfo
+        ? `signature-gcode-user${userInfo.user_id}-sig${userInfo.signature_id}-${timestamp}.gcode`
+        : `signature-gcode-${timestamp}.gcode`;
+
+      link.download = filename;
       link.click();
       window.URL.revokeObjectURL(url);
     }
@@ -339,8 +429,27 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
 
   onFeedbackClose(): void {
     this.showFeedback = false;
+
+    // Store config before resetting
+    const lastFeedbackConfig = this.feedbackConfig;
     this.feedbackConfig = null;
     this.gcodeService.resetProgress();
+
+    // Emit success to parent component if submission was successful
+    if (lastFeedbackConfig && 'data' in lastFeedbackConfig && lastFeedbackConfig.data?.submissionInfo) {
+      // Exclude consent from emitted data as well
+      const submissionData: SignatureSubmissionData = {
+        name: this.form.getRawValue().name,
+        email: this.form.getRawValue().email,
+        role: this.form.getRawValue().role,
+        faculty: this.form.getRawValue().faculty,
+        department: this.form.getRawValue().department,
+        // consent: this.form.getRawValue().consent, // Excluded
+        svgData: this.svgData,
+        submittedAt: new Date().toISOString()
+      };
+      this.uponSubmit.emit(submissionData);
+    }
   }
 
 }

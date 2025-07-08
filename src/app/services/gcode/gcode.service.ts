@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpEventType } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, from, throwError } from 'rxjs';
+import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { data } from '../../../environment/environment';
 
 export interface GCodeConversionResult {
@@ -45,6 +45,31 @@ export interface ApiProgress {
   status: 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
   message: string;
   error?: string;
+}
+
+export interface SignedSubmissionData {
+  name: string;
+  email: string;
+  role: string;
+  faculty: string;
+  department: string;
+  svg_data: string;
+  submitted_at: string;
+}
+
+export interface SignedSubmissionResult {
+  success: boolean;
+  user_id: number;
+  signature_id: number;
+  message: string;
+  gcode: string;
+  metadata: {
+    gcode_lines: number;
+    gcode_size: number;
+    movement_commands: number;
+    setup_commands: number;
+    estimated_duration: string;
+  };
 }
 
 @Injectable({
@@ -115,14 +140,14 @@ export class GcodeService {
     } else {
       // For raw SVG string, ensure it's properly encoded as UTF-8
       const svgString = typeof svgData === 'string' ? svgData : svgData.toString();
-      
+
       // Create a proper SVG blob with UTF-8 encoding
       const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      
+
       // You can either send as file or as raw data depending on API preference
       // Option 1: Send as file
       formData.append('svg_file', svgBlob, 'signature.svg');
-      
+
       // Option 2: Send as raw data (uncomment if API prefers this)
       // formData.append('svg_data', svgString);
     }
@@ -303,5 +328,159 @@ export class GcodeService {
    */
   getCurrentProgress(): ApiProgress {
     return this.progressSubject.value;
+  }
+
+  /**
+   * Generate HMAC signature for signed requests
+   */
+  private async generateHmacSignature(submissionData: any): Promise<string> {
+    const signingKey = data.gcodeReturner.signingKey;
+
+    if (!signingKey) {
+      throw new Error('Signing key not configured');
+    }
+
+    /* console.log('=== FRONTEND PROCESSING ===');
+    console.log('Frontend signing key:', `'${signingKey}'`);
+    console.log('Frontend signing key length:', signingKey.length);
+    console.log('Frontend input data (consent excluded):', submissionData);
+ */
+    // Remove signature field from data
+    const cleanData = { ...submissionData };
+    delete cleanData.request_signature;
+
+   /*  console.log('Frontend clean data:', cleanData);
+    console.log('Frontend clean data keys:', Object.keys(cleanData));
+    console.log('Frontend clean data values:', Object.values(cleanData));
+ */
+    // Create canonical string EXACTLY like backend
+    const sortedItems = Object.keys(cleanData).sort().map(key => [key, cleanData[key]]);
+    //console.log('Frontend sorted items:', sortedItems);
+
+    const canonicalParts: string[] = [];
+
+    for (const [key, value] of sortedItems) {
+      //console.log(`Frontend processing key '${key}' with value '${value}' (type: ${typeof value})`);
+
+      let processedValue: string;
+
+      if (typeof value === 'object' && value !== null) {
+        processedValue = JSON.stringify(value);
+        //console.log(`  -> object converted to: '${processedValue}'`);
+      } else if (value === null || value === undefined) {
+        processedValue = '';
+        //console.log(`  -> null/undefined converted to: '${processedValue}'`);
+      } else {
+        processedValue = String(value);
+        //console.log(`  -> converted to string: '${processedValue}'`);
+      }
+
+      const part = `${key}=${processedValue}`;
+      canonicalParts.push(part);
+      //console.log(`  -> canonical part: '${part}'`);
+    }
+
+    const canonicalString = canonicalParts.join('&');
+
+  /*   console.log('Frontend canonical string:', `'${canonicalString}'`);
+    console.log('Frontend canonical length:', canonicalString.length); */
+
+    // Generate HMAC-SHA256 signature
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(signingKey);
+    const messageData = encoder.encode(canonicalString);
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+    const hexSignature = Array.from(new Uint8Array(signature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+/* 
+    console.log('Frontend generated signature:', hexSignature);
+    console.log('Frontend signature length:', hexSignature.length); */
+
+    return hexSignature;
+  }
+
+  /**
+   * Submit signed form data with user information and signature
+   */
+  submitSignedData(submissionData: SignedSubmissionData): Observable<SignedSubmissionResult> {
+    this.updateProgress({
+      status: 'uploading',
+      progress: 10,
+      message: 'Preparing signed submission...'
+    });
+
+    return from(this.generateHmacSignature(submissionData)).pipe(
+      switchMap(signature => {
+        const signedData = {
+          ...submissionData,
+          request_signature: signature
+        };
+
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        });
+
+        this.updateProgress({
+          status: 'uploading',
+          progress: 30,
+          message: 'Submitting form data...'
+        });
+
+        return this.http.post<SignedSubmissionResult>(
+          `${this.baseUrl}${data.gcodeReturner.endpoints.signedSubmit}`,
+          signedData,
+          {
+            headers,
+            reportProgress: true,
+            observe: 'events'
+          }
+        );
+      }),
+      map(event => {
+        switch (event.type) {
+          case HttpEventType.UploadProgress:
+            if (event.total) {
+              const progress = Math.round(100 * event.loaded / event.total);
+              this.updateProgress({
+                progress: 30 + (progress * 0.4), // 30-70% for upload
+                status: 'uploading',
+                message: `Uploading... ${progress}%`
+              });
+            }
+            break;
+          case HttpEventType.Response:
+            this.updateProgress({
+              progress: 100,
+              status: 'completed',
+              message: 'Form submitted successfully!'
+            });
+            return event.body as SignedSubmissionResult;
+        }
+        return null as any;
+      }),
+      tap(() => {
+        this.updateProgress({
+          status: 'processing',
+          progress: 70,
+          message: 'Processing submission and generating G-code...'
+        });
+      }),
+      catchError(error => {
+        console.error('Signed submission failed:', error);
+        return this.handleError(error);
+      })
+    );
   }
 }

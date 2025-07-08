@@ -35,6 +35,14 @@
       &.error {
         @apply border-error ring-error;
       }
+
+      &.disabled {
+        @apply bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-60;
+      }
+      
+      &:disabled {
+        @apply bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-60;
+      }
     }
 
     .checkbox-group {
@@ -45,6 +53,10 @@
 
         &.error {
           @apply border-error;
+        }
+
+        &:disabled {
+          @apply opacity-60 cursor-not-allowed;
         }
       }
 

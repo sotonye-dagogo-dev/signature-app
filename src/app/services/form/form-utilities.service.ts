@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FormGroup, FormControl, Validators, AbstractControl } from '@angular/forms';
+import { GcodeService } from '../gcode/gcode.service';
 
 export interface SignatureSubmissionData {
   name: string;
@@ -7,7 +8,7 @@ export interface SignatureSubmissionData {
   role: 'student' | 'lecturer' | 'other';
   faculty: string;
   department: string;
-  consent: boolean;
+  consent?: boolean; // Make optional since it won't be sent to backend
   svgData: string;
   submittedAt?: string;
 }
@@ -25,6 +26,7 @@ export interface FormFieldConfig {
   required: boolean;
   validators?: any[];
   options?: SelectOption[];
+  dependsOn?: string; // Field that this field depends on
 }
 
 @Injectable({
@@ -36,6 +38,8 @@ export class FormUtilitiesService {
   private readonly roleOptions: SelectOption[] = [
     { value: 'student', label: 'Student' },
     { value: 'lecturer', label: 'Lecturer' },
+    { value: 'hod', label: 'Head of Department' },
+    { value: 'dean', label: 'Dean' },
     { value: 'other', label: 'Other' }
   ];
 
@@ -141,7 +145,8 @@ export class FormUtilitiesService {
       type: 'select',
       required: true,
       validators: [Validators.required],
-      options: this.departmentOptions
+      options: this.departmentOptions,
+      dependsOn: 'faculty'
     },
     {
       name: 'consent',
@@ -152,17 +157,38 @@ export class FormUtilitiesService {
     }
   ];
 
-  constructor() { }
+  constructor(private gcodeService: GcodeService) { }
 
   createSignatureSubmissionForm(): FormGroup {
     const formControls: { [key: string]: FormControl } = {};
 
     this.formFieldsConfig.forEach(field => {
       const defaultValue = field.type === 'checkbox' ? false : '';
-      formControls[field.name] = new FormControl(defaultValue, field.validators || []);
+      const isInitiallyDisabled = field.dependsOn === 'faculty'; // Department starts disabled
+
+      formControls[field.name] = new FormControl(
+        { value: defaultValue, disabled: isInitiallyDisabled },
+        field.validators || []
+      );
     });
 
     return new FormGroup(formControls);
+  }
+
+  // Method to enable/disable department based on faculty selection
+  updateDepartmentControl(form: FormGroup, facultyValue: string): void {
+    const departmentControl = form.get('department');
+    if (!departmentControl) return;
+
+    if (facultyValue) {
+      // Enable department and reset its value
+      departmentControl.enable();
+      departmentControl.setValue('');
+    } else {
+      // Disable department and reset its value
+      departmentControl.disable();
+      departmentControl.setValue('');
+    }
   }
 
   getFormFieldsConfig(): FormFieldConfig[] {
@@ -244,21 +270,37 @@ export class FormUtilitiesService {
     return field ? field.label : controlName;
   }
 
-  async submitSignatureData(data: SignatureSubmissionData): Promise<boolean> {
+  async submitSignatureData(data: SignatureSubmissionData): Promise<{ success: boolean; result?: any; error?: string }> {
     try {
-      // Simulate API call
-      console.log('Submitting signature data:', {
-        ...data,
-        svgData: data.svgData.substring(0, 100) + '...' // Log truncated SVG for privacy
+      // Prepare submission data for the API - exclude consent field
+      const submissionData = {
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        faculty: data.faculty,
+        department: data.department,
+        svg_data: data.svgData,
+        submitted_at: data.submittedAt || new Date().toISOString()
+        // Note: consent field is intentionally excluded from API submission
+      };
+
+      console.log('Submitting signature data to API (consent excluded):', {
+        ...submissionData,
+        svg_data: submissionData.svg_data.substring(0, 100) + '...' // Log truncated SVG for privacy
       });
 
-      // Here you would typically make an HTTP request to your backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use the GCode service for signed submission
+      const result = await this.gcodeService.submitSignedData(submissionData).toPromise();
 
-      return true;
+      console.log('API submission successful:', result);
+      return { success: true, result };
+
     } catch (error) {
-      console.error('Failed to submit signature data:', error);
-      return false;
+      console.error('Failed to submit signature data to API:', error);
+      return {
+        success: false,
+        error: typeof error === 'string' ? error : 'Failed to submit data to server'
+      };
     }
   }
 }
