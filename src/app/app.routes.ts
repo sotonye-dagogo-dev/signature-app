@@ -21,7 +21,7 @@ export const routes: Routes = [
     {
         path: 'query',
         component: QueryComponent
-    }
+    },
     {
         path: '**',
         component: NotFoundComponent

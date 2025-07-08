@@ -6,6 +6,7 @@ import {
   faInfo, faCopy, faDownload, faRefresh
 } from '@fortawesome/free-solid-svg-icons';
 import { Subject, takeUntil, interval } from 'rxjs';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export type FeedbackType = 'loading' | 'success' | 'error' | 'warning' | 'info' | 'progress' | 'timer' | 'custom';
 export type FeedbackSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -70,6 +71,8 @@ export class FeedbackDisplayComponent implements OnInit, OnDestroy {
   faDownload = faDownload;
   faRefresh = faRefresh;
 
+  constructor(private sanitizer: DomSanitizer) { }
+
   ngOnInit(): void {
     if (this.config.autoHide && this.config.autoHideDelay) {
       setTimeout(() => {
@@ -130,6 +133,20 @@ export class FeedbackDisplayComponent implements OnInit, OnDestroy {
       return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
     return '00:00';
+  }
+
+  sanitizeSvgForPreview(svgData: string): SafeHtml {
+    if (!svgData) return '';
+
+    let processedSvg = svgData;
+    if (!processedSvg.includes('style=')) {
+      processedSvg = processedSvg.replace(
+        '<svg',
+        '<svg style="width: 100%; max-width: 400px; height: auto; min-height: 200px; border: 1px solid #e5e7eb; background: white; margin: 0 auto; display: block;"'
+      );
+    }
+
+    return this.sanitizer.bypassSecurityTrustHtml(processedSvg);
   }
 
   private startTimer(): void {

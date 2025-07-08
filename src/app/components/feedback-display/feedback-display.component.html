@@ -71,6 +71,19 @@
                 </div>
             </div>
 
+            <!-- SVG Preview Display -->
+            <div *ngIf="config.data.type === 'svg-preview'" class="svg-preview-display">
+                <div class="svg-container" [innerHTML]="sanitizeSvgForPreview(config.data.signature.svg_data)">
+                </div>
+            </div>
+
+            <!-- G-Code Preview Display -->
+            <div *ngIf="config.data.type === 'gcode-preview'" class="gcode-preview-display">
+                <div class="gcode-content">
+                    <pre>{{ config.data.signature.gcode_data }}</pre>
+                </div>
+            </div>
+
             <!-- SSIM results -->
             <div *ngIf="config.data.type === 'ssim'" class="ssim-display">
                 <div class="score-circle">
