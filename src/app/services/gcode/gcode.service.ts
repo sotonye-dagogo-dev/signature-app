@@ -77,6 +77,8 @@ export interface SignedSubmissionResult {
 })
 export class GcodeService {
   private baseUrl = data.gcodeReturner.localApi;
+  //private baseUrl = data.gcodeReturner.prodApi;
+  private cachedSigningKey: string | null = null;
   private progressSubject = new BehaviorSubject<ApiProgress>({
     progress: 0,
     status: 'idle',
@@ -331,10 +333,67 @@ export class GcodeService {
   }
 
   /**
+   * Fetch signing key for HMAC signature generation
+   */
+  async getSigningKey(): Promise<string> {
+    if (this.cachedSigningKey) {
+      return this.cachedSigningKey;
+    }
+
+    try {
+      // This is still not truly secure, but adds a layer of obfuscation.
+      // The following code decrypts the signing key using AES-256-CBC.
+
+      // Convert the hex-encoded key derivation salt to a Uint8Array
+    const keyDerivationSalt = new Uint8Array(
+      data.gcodeReturner.keyDerivationSalt.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
+    );
+
+    // For AES-CBC decryption, we need to use the key directly, not derive it with PBKDF2
+    // Since your build script uses the encryptionKey directly for AES-CBC
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyDerivationSalt, // This is actually the encryption key, not a salt
+      { name: 'AES-CBC', length: 256 },
+      false,
+      ['decrypt']
+    );
+
+    // Convert the hex-encoded encrypted data to a Uint8Array
+    const encryptedDataHex = data.gcodeReturner.encryptedSigningKey;
+    const encryptedDataBytes = new Uint8Array(encryptedDataHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+
+    // For AES-CBC, the IV is 16 bytes (128 bits)
+    const iv = encryptedDataBytes.slice(0, 16);
+    const ciphertext = encryptedDataBytes.slice(16);
+
+    // Decrypt the data using AES-CBC
+    const decrypted = await crypto.subtle.decrypt(
+      {
+        name: 'AES-CBC',
+        iv: iv
+      },
+      key,
+      ciphertext
+    );
+
+    // Decode the decrypted ArrayBuffer into a UTF-8 string
+    this.cachedSigningKey = new TextDecoder().decode(decrypted);
+
+    return this.cachedSigningKey;
+    } catch (error) {
+      console.error('Error decrypting signing key:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate HMAC signature for signed requests
    */
-  private async generateHmacSignature(submissionData: any): Promise<string> {
-    const signingKey = data.gcodeReturner.signingKey;
+  async generateHmacSignature(submissionData: any): Promise<string> {
+    // console.log(data.production); // DL
+    const signingKey = data.production ? await this.getSigningKey() : data.gcodeReturner.signingKey
+    // console.log(signingKey); // debugimg decrypted signing key
 
     if (!signingKey) {
       throw new Error('Signing key not configured');
@@ -349,10 +408,10 @@ export class GcodeService {
     const cleanData = { ...submissionData };
     delete cleanData.request_signature;
 
-   /*  console.log('Frontend clean data:', cleanData);
-    console.log('Frontend clean data keys:', Object.keys(cleanData));
-    console.log('Frontend clean data values:', Object.values(cleanData));
- */
+    /*  console.log('Frontend clean data:', cleanData);
+     console.log('Frontend clean data keys:', Object.keys(cleanData));
+     console.log('Frontend clean data values:', Object.values(cleanData));
+  */
     // Create canonical string EXACTLY like backend
     const sortedItems = Object.keys(cleanData).sort().map(key => [key, cleanData[key]]);
     //console.log('Frontend sorted items:', sortedItems);
@@ -382,8 +441,8 @@ export class GcodeService {
 
     const canonicalString = canonicalParts.join('&');
 
-  /*   console.log('Frontend canonical string:', `'${canonicalString}'`);
-    console.log('Frontend canonical length:', canonicalString.length); */
+    /*   console.log('Frontend canonical string:', `'${canonicalString}'`);
+      console.log('Frontend canonical length:', canonicalString.length); */
 
     // Generate HMAC-SHA256 signature
     const encoder = new TextEncoder();
@@ -402,9 +461,9 @@ export class GcodeService {
     const hexSignature = Array.from(new Uint8Array(signature))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-/* 
-    console.log('Frontend generated signature:', hexSignature);
-    console.log('Frontend signature length:', hexSignature.length); */
+    /* 
+        console.log('Frontend generated signature:', hexSignature);
+        console.log('Frontend signature length:', hexSignature.length); */
 
     return hexSignature;
   }

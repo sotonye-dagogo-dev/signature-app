@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Observable, from, throwError, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, switchMap, tap } from 'rxjs/operators';
 import { data } from '../../../environment/environment';
+import { GcodeService } from '../gcode/gcode.service';
 
 export interface UserData {
   id: number;
@@ -49,6 +50,7 @@ export interface QueryState {
 })
 export class DbService {
   private baseUrl = data.gcodeReturner.localApi;
+  // private baseUrl = data.gcodeReturner.prodApi;
 
   // Cache for query results
   private queryStateSubject = new BehaviorSubject<QueryState>({
@@ -64,63 +66,10 @@ export class DbService {
   // Cache expiration time (30 minutes)
   private readonly CACHE_EXPIRY_MS = 30 * 60 * 1000;
 
-  constructor(private http: HttpClient) { }
-
-  /**
-   * Generate HMAC signature for signed requests
-   */
-  private async generateHmacSignature(requestData: any): Promise<string> {
-    const signingKey = data.gcodeReturner.signingKey;
-
-    if (!signingKey) {
-      throw new Error('Signing key not configured');
-    }
-
-    // Remove signature field from data
-    const cleanData = { ...requestData };
-    delete cleanData.request_signature;
-
-    // Create canonical string EXACTLY like backend
-    const sortedItems = Object.keys(cleanData).sort().map(key => [key, cleanData[key]]);
-    const canonicalParts: string[] = [];
-
-    for (const [key, value] of sortedItems) {
-      let processedValue: string;
-
-      if (typeof value === 'object' && value !== null) {
-        processedValue = JSON.stringify(value);
-      } else if (value === null || value === undefined) {
-        processedValue = '';
-      } else {
-        processedValue = String(value);
-      }
-
-      const part = `${key}=${processedValue}`;
-      canonicalParts.push(part);
-    }
-
-    const canonicalString = canonicalParts.join('&');
-
-    // Generate HMAC-SHA256 signature
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(signingKey);
-    const messageData = encoder.encode(canonicalString);
-
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-    const hexSignature = Array.from(new Uint8Array(signature))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    return hexSignature;
-  }
+  constructor(
+    private http: HttpClient,
+    private gcode: GcodeService
+  ) { }
 
   /**
    * Get current query state
@@ -195,7 +144,7 @@ export class DbService {
       currentState.lastSearchResult &&
       this.isCacheValid(currentState.searchTimestamp)) {
 
-      console.log('Returning cached user data for:', email);
+      // console.log('Returning cached user data for:', email);
       return of(currentState.lastSearchResult);
     }
 
@@ -204,7 +153,7 @@ export class DbService {
 
     const requestData = { email };
 
-    return from(this.generateHmacSignature(requestData)).pipe(
+    return from(this.gcode.generateHmacSignature(requestData)).pipe(
       switchMap(signature => {
         const signedData = {
           ...requestData,
@@ -231,7 +180,7 @@ export class DbService {
           searchError: null,
           searchTimestamp: Date.now()
         });
-        console.log('User data cached for:', email);
+        // console.log('User data cached for:', email);
       }),
       catchError(error => {
         const errorMessage = this.getErrorMessage(error);

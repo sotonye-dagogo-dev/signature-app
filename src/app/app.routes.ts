@@ -23,6 +23,10 @@ export const routes: Routes = [
         component: QueryComponent
     },
     {
+        path: 'not-found',
+        component: NotFoundComponent
+    },
+    {
         path: '**',
         component: NotFoundComponent
     }

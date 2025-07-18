@@ -17,7 +17,8 @@ export function processRoutes(routes: Route[]): NavLink[] {
         .filter(route => {
             // Filter out empty paths, wildcards, and redirects
             return route.path &&
-                route.path !== '**' &&
+                route.path !== '**' && 
+                route.path !== 'not-found' &&
                 !route.redirectTo &&
                 route.component; // Ensure route has a component
         })

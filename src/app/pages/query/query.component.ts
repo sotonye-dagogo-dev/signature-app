@@ -84,9 +84,9 @@ export class QueryComponent implements OnInit, OnDestroy {
 
     // Check if we have cached data on component init
     const cachedState = this.dbService.getCurrentQueryState();
-    if (cachedState.lastSearchEmail) {
+    /* if (cachedState.lastSearchEmail) {
       console.log('Restored cached search state for:', cachedState.lastSearchEmail);
-    }
+    } */
   }
 
   ngOnDestroy(): void {
@@ -114,7 +114,7 @@ export class QueryComponent implements OnInit, OnDestroy {
 
   onRefresh(): void {
     if (this.queryState.lastSearchEmail && !this.queryState.isSearching) {
-      console.log('Refreshing search for:', this.queryState.lastSearchEmail);
+      // console.log('Refreshing search for:', this.queryState.lastSearchEmail);
       this.searchUser(this.queryState.lastSearchEmail, true);
     }
   }
@@ -124,7 +124,7 @@ export class QueryComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result: UserRetrievalResult) => {
-          console.log('User data retrieved:', result);
+          // console.log('User data retrieved:', result);
           // State is managed by DbService, component just reacts to changes
         },
         error: (error: string) => {
@@ -273,10 +273,10 @@ export class QueryComponent implements OnInit, OnDestroy {
   // Copy operations
   async copyGCode(signature: SignatureData): Promise<void> {
     const success = await this.dbService.copyToClipboard(signature.gcode_data);
-    if (success) {
+    /* if (success) {
       // Show temporary success feedback
       console.log('G-Code copied to clipboard');
-    }
+    } */
   }
 
   // Feedback handlers

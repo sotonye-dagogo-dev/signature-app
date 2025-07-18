@@ -3,8 +3,8 @@
   "version": "1.0.1",
   "scripts": {
     "ng": "ng",
-    "start": "vite",
-    "build": "vite build",
+    "start": "node dev-with-env.cjs",
+    "build": "node build-with-cleanup.cjs",
     "preview": "vite preview",
     "dev": "vite",
     "watch": "vite build --watch",
