@@ -308,12 +308,12 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
         submittedAt: new Date().toISOString()
       };
 
-      console.log('Starting signature submission (consent excluded from API data):', formData);
+      // console.log('Starting signature submission (consent excluded from API data):', formData);
 
       // Convert SVG to G-code
       this.gcodeService.convertSvgToGcode(this.svgData).subscribe({
         next: (result) => {
-          console.log('G-code conversion successful:', result);
+          // console.log('G-code conversion successful:', result);
 
           // Display G-code result
           this.feedbackConfig = {
@@ -352,7 +352,7 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
             note: 'Consent field validated locally but excluded from API submission'
           };
 
-          console.log('Complete submission data:', completeSubmission);
+          // console.log('Complete submission data:', completeSubmission);
 
           this.isSubmitting = false;
         },
@@ -423,7 +423,7 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
 
   private sendToDevice(): void {
     // This will integrate with Arduino service later
-    console.log('Sending G-code to device...');
+    // console.log('Sending G-code to device...');
     // TODO: Integrate with Arduino service
   }
 

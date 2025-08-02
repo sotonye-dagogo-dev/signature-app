@@ -227,7 +227,7 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
 
     this.gcodeService.convertSvgToGcode(svgContent, false).subscribe({
       next: (result) => {
-        console.log('G-code conversion result:', result);
+        // console.log('G-code conversion result:', result);
         
         this.gcodeFeedbackConfig = {
           type: 'custom',
