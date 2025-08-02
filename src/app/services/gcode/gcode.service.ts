@@ -76,8 +76,7 @@ export interface SignedSubmissionResult {
   providedIn: 'root'
 })
 export class GcodeService {
-  private baseUrl = data.gcodeReturner.localApi;
-  //private baseUrl = data.gcodeReturner.prodApi;
+  private baseUrl = data.production ? data.gcodeReturner.prodApi : data.gcodeReturner.localApi;
   private cachedSigningKey: string | null = null;
   private progressSubject = new BehaviorSubject<ApiProgress>({
     progress: 0,

@@ -49,8 +49,7 @@ export interface QueryState {
   providedIn: 'root'
 })
 export class DbService {
-  private baseUrl = data.gcodeReturner.localApi;
-  // private baseUrl = data.gcodeReturner.prodApi;
+  private baseUrl = data.production ? data.gcodeReturner.prodApi : data.gcodeReturner.localApi;
 
   // Cache for query results
   private queryStateSubject = new BehaviorSubject<QueryState>({
