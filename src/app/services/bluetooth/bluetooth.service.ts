@@ -59,16 +59,17 @@ export class BluetoothService {
       this.errorSubject.next(null);
 
       const device = await navigator.bluetooth.requestDevice({
-        // acceptAllDevices: true,
-        filters: [
-        { namePrefix: 'HC' }, // Common prefix for HC-05 modules
-        { services: [this.SERVICE_UUID.ARDUINO_UART] }
-        ],
+        acceptAllDevices: true,
+        /* filters: [
+          //{ name: 'HC-SR2025' }, // Specific device name
+          { namePrefix: 'HC' }, // Common prefix for HC-05/HC-06 modules
+          { services: [this.SERVICE_UUID.ARDUINO_UART] }
+        ], */
         optionalServices: [
           this.SERVICE_UUID.ARDUINO_UART,
           this.SERVICE_UUID.ARDUINO_UART_ALT
         ]
-      });      
+      });
 
       /* console.log('Found device:', {
         name: device.name,

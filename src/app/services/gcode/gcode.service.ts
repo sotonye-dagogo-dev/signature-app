@@ -387,64 +387,63 @@ export class GcodeService {
     }
   }
 
-  /**
+    /**
    * Generate HMAC signature for signed requests
    */
   async generateHmacSignature(submissionData: any): Promise<string> {
-    // console.log(data.production); // DL
-    const signingKey = data.production ? await this.getSigningKey() : data.gcodeReturner.signingKey
-    // console.log(signingKey); // debugimg decrypted signing key
+    const signingKey = data.production ? await this.getSigningKey() : data.gcodeReturner.signingKey;
+    // console.log('Signing key:', signingKey); // debugging
 
     if (!signingKey) {
       throw new Error('Signing key not configured');
     }
 
-    /* console.log('=== FRONTEND PROCESSING ===');
-    console.log('Frontend signing key:', `'${signingKey}'`);
-    console.log('Frontend signing key length:', signingKey.length);
-    console.log('Frontend input data (consent excluded):', submissionData);
- */
-    // Remove signature field from data
+    // Remove signature field from data (matching backend)
     const cleanData = { ...submissionData };
     delete cleanData.request_signature;
 
-    /*  console.log('Frontend clean data:', cleanData);
-     console.log('Frontend clean data keys:', Object.keys(cleanData));
-     console.log('Frontend clean data values:', Object.values(cleanData));
-  */
     // Create canonical string EXACTLY like backend
+    // Backend uses: sorted_items = sorted(clean_data.items())
     const sortedItems = Object.keys(cleanData).sort().map(key => [key, cleanData[key]]);
-    //console.log('Frontend sorted items:', sortedItems);
 
     const canonicalParts: string[] = [];
 
     for (const [key, value] of sortedItems) {
-      //console.log(`Frontend processing key '${key}' with value '${value}' (type: ${typeof value})`);
 
       let processedValue: string;
 
+      // Match backend logic exactly:
+      // if isinstance(value, dict):
+      //     value = json.dumps(value, sort_keys=True)
+      // elif isinstance(value, list):
+      //     value = json.dumps(value, sort_keys=True)
+      // elif value is None:
+      //     value = ''
+      // else:
+      //     value = str(value)
+
       if (typeof value === 'object' && value !== null) {
-        processedValue = JSON.stringify(value);
-        //console.log(`  -> object converted to: '${processedValue}'`);
+        if (Array.isArray(value)) {
+          // Handle arrays
+          processedValue = JSON.stringify(value);
+        } else {
+          // Handle objects - use sort_keys=True equivalent
+          processedValue = JSON.stringify(value, Object.keys(value).sort());
+        }
       } else if (value === null || value === undefined) {
         processedValue = '';
-        //console.log(`  -> null/undefined converted to: '${processedValue}'`);
       } else {
         processedValue = String(value);
-        //console.log(`  -> converted to string: '${processedValue}'`);
       }
 
       const part = `${key}=${processedValue}`;
       canonicalParts.push(part);
-      //console.log(`  -> canonical part: '${part}'`);
     }
 
+    // Backend uses: canonical_string = "&".join(canonical_parts)
     const canonicalString = canonicalParts.join('&');
 
-    /*   console.log('Frontend canonical string:', `'${canonicalString}'`);
-      console.log('Frontend canonical length:', canonicalString.length); */
-
-    // Generate HMAC-SHA256 signature
+    // Generate HMAC-SHA256 signature (same as backend)
     const encoder = new TextEncoder();
     const keyData = encoder.encode(signingKey);
     const messageData = encoder.encode(canonicalString);
@@ -461,14 +460,14 @@ export class GcodeService {
     const hexSignature = Array.from(new Uint8Array(signature))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    /* 
-        console.log('Frontend generated signature:', hexSignature);
-        console.log('Frontend signature length:', hexSignature.length); */
+
+    /* console.log('Frontend generated signature:', hexSignature);
+    console.log('Frontend signature length:', hexSignature.length); */
 
     return hexSignature;
   }
 
-  /**
+    /**
    * Submit signed form data with user information and signature
    */
   submitSignedData(submissionData: SignedSubmissionData): Observable<SignedSubmissionResult> {
@@ -478,10 +477,20 @@ export class GcodeService {
       message: 'Preparing signed submission...'
     });
 
-    return from(this.generateHmacSignature(submissionData)).pipe(
+    // Ensure the data format matches what the backend expects
+    const formattedData = {
+      name: submissionData.name,
+      email: submissionData.email,
+      role: submissionData.role,
+      faculty: submissionData.faculty,
+      department: submissionData.department,
+      svg_data: submissionData.svg_data
+    };
+
+    return from(this.generateHmacSignature(formattedData)).pipe(
       switchMap(signature => {
         const signedData = {
-          ...submissionData,
+          ...formattedData,
           request_signature: signature
         };
 

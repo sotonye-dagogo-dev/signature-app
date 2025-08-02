@@ -181,7 +181,7 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
           };
 
           this.showFeedback = true;
-          console.log('Form submitted successfully:', result.result);
+          // console.log('Form submitted successfully:', result.result);
 
         } else {
           throw new Error(result.error || 'Submission failed');

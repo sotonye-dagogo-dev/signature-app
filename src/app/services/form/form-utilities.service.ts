@@ -284,15 +284,15 @@ export class FormUtilitiesService {
         // Note: consent field is intentionally excluded from API submission
       };
 
-      console.log('Submitting signature data to API (consent excluded):', {
+      /* console.log('Submitting signature data to API (consent excluded):', {
         ...submissionData,
         svg_data: submissionData.svg_data.substring(0, 100) + '...' // Log truncated SVG for privacy
-      });
+      }); */
 
       // Use the GCode service for signed submission
       const result = await this.gcodeService.submitSignedData(submissionData).toPromise();
 
-      console.log('API submission successful:', result);
+      //console.log('API submission successful:', result);
       return { success: true, result };
 
     } catch (error) {

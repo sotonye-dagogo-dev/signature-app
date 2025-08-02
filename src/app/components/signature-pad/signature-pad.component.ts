@@ -306,7 +306,7 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   onSubmissionComplete(data: SignatureSubmissionData): void {
-    console.log('Signature submitted successfully:', data);
+    // console.log('Signature submitted successfully:', data);
     this.isSubmissionModalOpen = false;
 
     // Optionally clear the signature pad after successful submission
