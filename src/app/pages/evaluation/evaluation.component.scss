@@ -414,7 +414,7 @@
   }
 
   .modal-actions {
-    @apply flex-col space-x-0 space-y-2;
+    @apply flex-col gap-2 justify-between space-x-0 space-y-2;
   }
 
   .format-examples {
