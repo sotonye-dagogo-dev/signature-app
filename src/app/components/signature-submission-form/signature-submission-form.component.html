@@ -20,17 +20,17 @@
         <div class="form-group">
             @if (field.type === 'text' || field.type === 'email') {
             <!-- Text and Email Fields -->
-            <label [for]="field.name" class="form-label">
+            <label for="{{field.name}}" class="form-label">
                 {{ field.label }}@if (field.required) { * }
             </label>
-            <input [id]="field.name" [type]="field.type" [formControlName]="field.name" class="form-input"
+            <input id="{{field.name}}" [type]="field.type" [formControlName]="field.name" class="form-input"
                 [class.error]="isFieldInvalid(field.name)" [placeholder]="field.placeholder || ''" />
             } @else if (field.type === 'select') {
             <!-- Select Fields -->
-            <label [for]="field.name" class="form-label">
+            <label for="{{field.name}}" class="form-label">
                 {{ field.label }}@if (field.required) { * }
             </label>
-            <select [id]="field.name" [formControlName]="field.name" class="form-select"
+            <select id="{{field.name}}" [formControlName]="field.name" class="form-select"
                 [class.error]="isFieldInvalid(field.name)" >
                 <option value="">{{ getSelectPlaceholder(field.name) }}</option>
                 @for (option of getFieldOptions(field.name); track option.value) {
@@ -40,9 +40,9 @@
             } @else if (field.type === 'checkbox') {
             <!-- Checkbox Field -->
             <div class="checkbox-group">
-                <input [id]="field.name" type="checkbox" [formControlName]="field.name" class="form-checkbox"
+                <input id="{{field.name}}" type="checkbox" [formControlName]="field.name" class="form-checkbox"
                     [class.error]="isFieldInvalid(field.name)" />
-                <label [for]="field.name" class="checkbox-label">
+                <label for="{{field.name}}" class="checkbox-label">
                     {{ field.label }}@if (field.required) { * }
                 </label>
             </div>

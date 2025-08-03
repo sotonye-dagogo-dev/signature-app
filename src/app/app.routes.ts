@@ -3,6 +3,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { DeviceSetupComponent } from './pages/device-setup/device-setup.component';
 import { QueryComponent } from './pages/query/query.component';
+import { EvaluationComponent } from './pages/evaluation/evaluation.component';
 
 export const routes: Routes = [
     {
@@ -21,6 +22,10 @@ export const routes: Routes = [
     {
         path: 'query',
         component: QueryComponent
+    },
+    {
+        path: 'evaluation',
+        component: EvaluationComponent
     },
     {
         path: 'not-found',

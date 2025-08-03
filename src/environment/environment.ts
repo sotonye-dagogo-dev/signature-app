@@ -1,6 +1,6 @@
 
     export const data = {
-            production: true,
+            production: false,
             gcodeReturner: {
                 localApi: "http://localhost:8000/api/",
                 prodApi: "https://signatureeu.pythonanywhere.com/api/",

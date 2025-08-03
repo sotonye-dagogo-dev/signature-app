@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FormGroup, FormControl, Validators, AbstractControl } from '@angular/forms';
 import { GcodeService } from '../gcode/gcode.service';
+import { GcodeParserService } from '../gcode/gcode-parser.service';
 
 export interface SignatureSubmissionData {
   name: string;
@@ -27,6 +28,18 @@ export interface FormFieldConfig {
   validators?: any[];
   options?: SelectOption[];
   dependsOn?: string; // Field that this field depends on
+}
+
+export interface FileValidationResult {
+  valid: boolean;
+  error?: string;
+  file?: File;
+}
+
+export interface FileValidationConfig {
+  allowedTypes: string[];
+  maxSizeBytes: number;
+  required?: boolean;
 }
 
 @Injectable({
@@ -157,7 +170,23 @@ export class FormUtilitiesService {
     }
   ];
 
-  constructor(private gcodeService: GcodeService) { }
+  // File validation configurations
+  private readonly imageValidationConfig: FileValidationConfig = {
+    allowedTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/bmp'],
+    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    required: true
+  };
+
+  private readonly jsonValidationConfig: FileValidationConfig = {
+    allowedTypes: ['application/json', 'text/plain'],
+    maxSizeBytes: 1 * 1024 * 1024, // 1MB
+    required: true
+  };
+
+  constructor(
+    private gcodeService: GcodeService,
+    private gcodeParser: GcodeParserService
+  ) { }
 
   createSignatureSubmissionForm(): FormGroup {
     const formControls: { [key: string]: FormControl } = {};
@@ -302,5 +331,101 @@ export class FormUtilitiesService {
         error: typeof error === 'string' ? error : 'Failed to submit data to server'
       };
     }
+  }
+
+  // File validation methods
+  validateImageFile(file: File | null, required: boolean = true): FileValidationResult {
+    return this.validateFile(file, {
+      ...this.imageValidationConfig,
+      required
+    });
+  }
+
+  validateJsonFile(file: File | null, required: boolean = true): FileValidationResult {
+    return this.validateFile(file, {
+      ...this.jsonValidationConfig,
+      required
+    });
+  }
+
+  private validateFile(file: File | null, config: FileValidationConfig): FileValidationResult {
+    if (!file) {
+      if (config.required) {
+        return { valid: false, error: 'File is required' };
+      }
+      return { valid: true };
+    }
+
+    // Check file type
+    if (!config.allowedTypes.includes(file.type)) {
+      const allowedExtensions = config.allowedTypes
+        .map(type => type.split('/')[1])
+        .join(', ');
+      return {
+        valid: false,
+        error: `Invalid file type. Allowed types: ${allowedExtensions}`
+      };
+    }
+
+    // Check file size
+    if (file.size > config.maxSizeBytes) {
+      const maxSizeMB = Math.round(config.maxSizeBytes / (1024 * 1024));
+      return {
+        valid: false,
+        error: `File size exceeds ${maxSizeMB}MB limit`
+      };
+    }
+
+    return { valid: true, file };
+  }
+
+  // Format file size for display
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  // Get file extension
+  getFileExtension(filename: string): string {
+    return filename.split('.').pop()?.toLowerCase() || '';
+  }
+
+  // Check if file is image
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+
+  // Create evaluation form validators
+  createEvaluationFormValidators() {
+    return {
+      toolpathValidator: (control: any) => {
+        if (!control.value) return null;
+
+        const validation = this.gcodeParser.detectInputFormat(control.value);
+
+        if (validation === 'json') {
+          // Validate JSON format
+          const jsonResult = this.gcodeParser.validateCoordinateArray(control.value);
+          if (!jsonResult.valid) {
+            return { invalidToolpath: jsonResult.error };
+          }
+        } else if (validation === 'gcode') {
+          // Validate G-code format
+          const gcodeResult = this.gcodeParser.parseGCode(control.value);
+          if (!gcodeResult.success) {
+            return { invalidToolpath: gcodeResult.error };
+          }
+        } else {
+          return { invalidToolpath: 'Invalid format. Please provide either G-code or JSON coordinate array.' };
+        }
+
+        return null;
+      }
+    };
   }
 }

@@ -1,0 +1,43 @@
+<div class="file-drop-container">
+    <!-- Hidden file input -->
+    <label for="fileInput"></label>
+    <input id="fileInput" name="fileInput" title="Input files" #fileInput type="file" [accept]="acceptTypes" [multiple]="multiple" [disabled]="disabled"
+        (change)="onFileInputChange($event)" class="hidden" />
+
+    <!-- Drop zone -->
+    <div class="file-drop-zone" [class.drag-over]="dragOver" [class.disabled]="disabled"
+        [class.has-files]="selectedFiles.length > 0" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)" (click)="openFileBrowser()">
+        <div class="drop-content">
+            <fa-icon [icon]="icon" class="drop-icon"></fa-icon>
+            <p class="drop-text">{{ label }}</p>
+            <p class="drop-hint" *ngIf="!disabled">
+                <span *ngIf="fileType === 'image'">Supported: PNG, JPEG, SVG, BMP (max 10MB)</span>
+                <span *ngIf="fileType === 'json'">Supported: JSON, TXT (max 1MB)</span>
+                <span *ngIf="fileType === 'any'">Any file type</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Validation error -->
+    <div *ngIf="validationError$" class="error-message">
+        <fa-icon [icon]="faTimes" class="error-icon"></fa-icon>
+        {{ validationError$ }}
+    </div>
+
+    <!-- Selected files -->
+    <div *ngIf="selectedFiles.length > 0" class="selected-files">
+        <div *ngFor="let file of selectedFiles; let i = index" class="selected-file">
+            <div class="file-info">
+                <fa-icon [icon]="imageIsFile(file) ? faImage : faFile" class="file-icon"></fa-icon>
+                <div class="file-details">
+                    <span class="file-name">{{ file.name }}</span>
+                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                </div>
+            </div>
+            <button type="button" class="remove-button" (click)="removeFile(i)" [disabled]="disabled">
+                <fa-icon [icon]="faTimes">X</fa-icon>
+            </button>
+        </div>
+    </div>
+</div>

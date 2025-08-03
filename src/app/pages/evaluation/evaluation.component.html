@@ -1,0 +1,301 @@
+<div class="evaluation-page">
+    <!-- Page Header -->
+    <header class="page-header">
+        <h1>Signature Evaluation</h1>
+        <p>Analyze signature quality using advanced image processing and G-code evaluation metrics</p>
+    </header>
+
+    <!-- Metrics Selection -->
+    <section class="metrics-section">
+        <h2>Available Evaluation Metrics</h2>
+        <div class="metrics-grid">
+            <div *ngFor="let metric of metricInfos" class="metric-card" (click)="selectMetric(metric.id)">
+                <div class="metric-header">
+                    <fa-icon [icon]="getMetricIcon(metric.id)" class="metric-icon"></fa-icon>
+                    <h3>{{ metric.name }}</h3>
+                    <button type="button" class="info-button"
+                        (click)="showMetricInfo(metric.id); $event.stopPropagation()">
+                        <fa-icon [icon]="faInfo">Info</fa-icon>
+                    </button>
+                </div>
+                <p class="metric-description">{{ metric.description }}</p>
+                <div class="metric-inputs">
+                    <span class="input-label">Inputs:</span>
+                    <ul>
+                        <li *ngFor="let input of metric.inputs">{{ input }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" *ngIf="evaluationResults.length > 0">
+        <div class="results-header">
+            <h2>Evaluation Results</h2>
+            <button type="button" class="btn btn-secondary" (click)="clearResults()">
+                Clear All
+            </button>
+        </div>
+
+        <div class="results-grid">
+            <div *ngFor="let result of evaluationResults" class="result-card">
+                <div class="result-header">
+                    <fa-icon [icon]="getMetricIcon(result.metric)" class="result-icon"></fa-icon>
+                    <div class="result-title">
+                        <h3>{{ metricInfoName(result.metric) }}</h3>
+                        <span class="result-timestamp">{{ result.timestamp | date:'short' }}</span>
+                    </div>
+                    <button type="button" class="download-button" (click)="downloadResult(result)">
+                        <fa-icon [icon]="faDownload">Download</fa-icon>
+                    </button>
+                </div>
+
+                <div class="result-content">
+                    <div class="score-display">
+                        <span class="score-label">
+                            {{ result.metric === 'execErr' ? 'Mean Error:' : 'Score:' }}
+                        </span>
+                        <span class="score-value">{{ formatScore(getResultScore(result), result.metric) }}</span>
+                    </div>
+                    <p *ngIf="getResultInterpretation(result) && getResultInterpretation(result) !== 'Nil'"
+                        class="interpretation">{{ getResultInterpretation(result) }}</p>
+
+                    <!-- Additional data for execution error -->
+                    <div *ngIf="result.metric === 'execErr'" class="additional-data">
+                        <div class="data-row">
+                            <span>Max Error:</span>
+                            <span>{{ $any(result.data).analysis?.max_error?.toFixed(4) }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span>Min Error:</span>
+                            <span>{{ $any(result.data).analysis?.min_error?.toFixed(4) }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span>Points Compared:</span>
+                            <span>{{ $any(result.data).analysis?.total_points }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Empty State -->
+    <section class="empty-state" *ngIf="evaluationResults.length === 0">
+        <fa-icon [icon]="faChartLine" class="empty-icon"></fa-icon>
+        <h3>No Evaluations Yet</h3>
+        <p>Select a metric above to start evaluating your signature data</p>
+    </section>
+</div>
+
+<!-- Evaluation Modal -->
+<app-modal [isOpen]="showModal" [title]="selectedMetricInfo?.name || 'Evaluation'" size="lg" (onClose)="onModalClose()">
+    <div class="modal-content" *ngIf="selectedMetricInfo">
+        <!-- Metric Description -->
+        <div class="metric-info">
+            <p>{{ selectedMetricInfo.description }}</p>
+            <div class="tips-section">
+                <fa-icon [icon]="faLightbulb" class="tips-icon"></fa-icon>
+                <span class="tips-title">Tips for best results:</span>
+                <ul class="tips-list">
+                    <li *ngFor="let tip of selectedMetricInfo.tips">{{ tip }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SSIM Form -->
+        <form *ngIf="selectedMetric === 'ssim'" [formGroup]="ssimForm" class="evaluation-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Original Image</label>
+                    <app-file-drop fileType="image" label="Drop original image here" [required]="true"
+                        (fileSelected)="onOriginalImageSelected($any($event))"
+                        (validationError)="onFileValidationError($event)"></app-file-drop>
+                </div>
+
+                <div class="form-group">
+                    <label>Reproduced Image</label>
+                    <app-file-drop fileType="image" label="Drop reproduced image here" [required]="true"
+                        (fileSelected)="onReproducedImageSelected($any($event))"
+                        (validationError)="onFileValidationError($event)"></app-file-drop>
+                </div>
+            </div>
+        </form>
+
+        <!-- Smoothness Form -->
+        <form *ngIf="selectedMetric === 'smoothness'" [formGroup]="smoothnessForm" class="evaluation-form">
+            <div class="form-group">
+                <label>Signature Image</label>
+                <app-file-drop fileType="image" label="Drop signature image here" [required]="true"
+                    (fileSelected)="onSignatureImageSelected($any($event))"
+                    (validationError)="onFileValidationError($event)"></app-file-drop>
+            </div>
+        </form>
+
+        <!-- Execution Error Form -->
+        <form *ngIf="selectedMetric === 'execErr'" [formGroup]="executionErrorForm" class="evaluation-form">
+            <!-- Format Help Toggle -->
+            <div class="format-help-toggle">
+                <button type="button" class="help-toggle-btn" (click)="toggleFormatHelp()">
+                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                    {{ showFormatHelp ? 'Hide' : 'Show' }} Format Help
+                </button>
+            </div>
+
+            <!-- Format Help Panel -->
+            <div *ngIf="showFormatHelp" class="format-help-panel">
+                <h4>Supported Input Formats</h4>
+                <div class="format-examples">
+                    <div class="format-example">
+                        <div class="format-header">
+                            <fa-icon [icon]="faCode" class="format-icon"></fa-icon>
+                            <span class="format-name">G-Code Format</span>
+                        </div>
+                        <p class="format-description">
+                            Standard G-code with movement commands and coordinates
+                        </p>
+                        <div class="format-sample">
+                            <code>G0 X10.0 Y10.0<br>G1 X20.0 Y15.0<br>G1 X30.0 Y20.0</code>
+                        </div>
+                    </div>
+
+                    <div class="format-example">
+                        <div class="format-header">
+                            <fa-icon [icon]="faCode" class="format-icon"></fa-icon>
+                            <span class="format-name">JSON Array Format</span>
+                        </div>
+                        <p class="format-description">
+                            Array of coordinate pairs [x, y]
+                        </p>
+                        <div class="format-sample">
+                            <code>[[10, 10], [20, 15], [30, 20]]</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <div class="input-header">
+                        <label>Expected Toolpath</label>
+                        <div class="format-indicator" [class]="'format-' + expectedFormat">
+                            <span class="format-badge">{{ getFormatLabel(expectedFormat) }}</span>
+                            <span class="format-hint">{{ getFormatDescription(expectedFormat) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="toolpath-input-container">
+                        <textarea formControlName="expectedToolpath"
+                            placeholder="Enter expected toolpath as G-code or JSON array..." rows="10"
+                            class="toolpath-textarea"
+                            (input)="onToolpathChange('expected', $event.target.value)"></textarea>
+
+                        <div class="input-actions">
+                            <button type="button" class="sample-button gcode-sample"
+                                (click)="insertSampleGCode('expected')">
+                                <fa-icon [icon]="faCode"></fa-icon>
+                                G-Code Sample
+                            </button>
+                            <button type="button" class="sample-button json-sample"
+                                (click)="insertSampleToolpath('expected')">
+                                <fa-icon [icon]="faCode"></fa-icon>
+                                JSON Sample
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Toolpath Statistics -->
+                    <div *ngIf="getToolpathStats('expected')" class="toolpath-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Points:</span>
+                            <span class="stat-value">{{ getToolpathStats('expected')?.points }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Format:</span>
+                            <span class="stat-value">{{ getToolpathStats('expected')?.format }}</span>
+                        </div>
+                    </div>
+
+                    <div *ngIf="executionErrorForm.get('expectedToolpath')?.errors && executionErrorForm.get('expectedToolpath')?.touched"
+                        class="field-error">
+                        <fa-icon [icon]="faTimes" class="error-icon"></fa-icon>
+                        Invalid toolpath format
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-header">
+                        <label>Actual Toolpath</label>
+                        <div class="format-indicator" [class]="'format-' + actualFormat">
+                            <span class="format-badge">{{ getFormatLabel(actualFormat) }}</span>
+                            <span class="format-hint">{{ getFormatDescription(actualFormat) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="toolpath-input-container">
+                        <textarea formControlName="actualToolpath"
+                            placeholder="Enter actual toolpath as G-code or JSON array..." rows="10"
+                            class="toolpath-textarea"
+                            (input)="onToolpathChange('actual', $event.target.value)"></textarea>
+
+                        <div class="input-actions">
+                            <button type="button" class="sample-button gcode-sample"
+                                (click)="insertSampleGCode('actual')">
+                                <fa-icon [icon]="faCode"></fa-icon>
+                                G-Code Sample
+                            </button>
+                            <button type="button" class="sample-button json-sample"
+                                (click)="insertSampleToolpath('actual')">
+                                <fa-icon [icon]="faCode"></fa-icon>
+                                JSON Sample
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Toolpath Statistics -->
+                    <div *ngIf="getToolpathStats('actual')" class="toolpath-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Points:</span>
+                            <span class="stat-value">{{ getToolpathStats('actual')?.points }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Format:</span>
+                            <span class="stat-value">{{ getToolpathStats('actual')?.format }}</span>
+                        </div>
+                    </div>
+
+                    <div *ngIf="executionErrorForm.get('actualToolpath')?.errors && executionErrorForm.get('actualToolpath')?.touched"
+                        class="field-error">
+                        <fa-icon [icon]="faTimes" class="error-icon"></fa-icon>
+                        Invalid toolpath format
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Summary -->
+            <div *ngIf="expectedFormat !== 'unknown' && actualFormat !== 'unknown' && expectedFormat !== actualFormat"
+                class="validation-warning">
+                <fa-icon [icon]="faExclamationTriangle" class="warning-icon"></fa-icon>
+                <span>Warning: Different input formats detected. Both toolpaths will be converted to coordinate arrays
+                    for comparison.</span>
+            </div>
+        </form>
+
+        <!-- Action Buttons -->
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="onModalClose()" [disabled]="isEvaluating">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-primary" (click)="runEvaluation()" [disabled]="!canRunEvaluation">
+                <fa-icon [icon]="faSpinner" *ngIf="isEvaluating" class="spinner"></fa-icon>
+                <fa-icon [icon]="faPlay" *ngIf="!isEvaluating"></fa-icon>
+                {{ isEvaluating ? 'Evaluating...' : 'Run Evaluation' }}
+            </button>
+        </div>
+    </div>
+</app-modal>
+
+<!-- Feedback Display -->
+<app-feedback-display *ngIf="showFeedback && feedbackConfig" [config]="feedbackConfig" [visible]="showFeedback"
+    (onClose)="onFeedbackClose()" (onAction)="onFeedbackAction($event)"></app-feedback-display>
