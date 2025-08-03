@@ -1,7 +1,15 @@
 /* Component specific styles can go here if needed */
 
 .signature-container {
-  @apply w-auto h-full max-h-[60vh] relative border border-gray-300 rounded-lg bg-white;
+  @apply w-auto h-full relative border border-gray-300 rounded-lg bg-white;
+}
+
+.signature-wrapper {
+  @apply w-full flex justify-center items-center;
+  
+  // Ensure proper containment
+  overflow: hidden;
+  border-radius: 0.5rem;
 }
 
 .signature-canvas {
@@ -9,19 +17,49 @@
 }
 
 .signature-pad-container {
-  @apply card w-full flex flex-col gap-1 justify-center items-center p-2 mx-auto;
+  @apply card w-full max-h-[80vh] flex flex-col gap-1 justify-center items-center p-2 mx-auto;
 }
 
-.signature-pad {
-  @apply w-11/12 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700;
-  aspect-ratio: 16/9;
-}
+// Allow for responsive behavior
+  .signature-pad {
+    @apply border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700;
+    
+    // Remove fixed aspect ratio - let JS handle it
+    width: 100%;
+    height: auto;
+    display: block;
+    
+    // Ensure touch events work properly on mobile
+    touch-action: none;
+    
+    // Smooth transitions during resize
+    transition: width 0.2s ease, height 0.2s ease;
+    
+    // Prevent selection and context menu
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    
+    &:focus {
+      @apply outline-none ring-2 ring-primary ring-opacity-50;
+    }
+  }
 
 .controls {
   @apply flex gap-4 w-full justify-center mt-4 flex-wrap;
 
   .control-btn {
-    @apply btn flex items-center gap-2;
+    @apply btn flex items-center gap-2 min-w-fit;
+
+    // Responsive button sizing
+    @screen sm {
+      @apply px-3 py-2;
+    }
+    
+    @screen md {
+      @apply px-4 py-2;
+    }
 
     &.clear {
       @apply btn-error;
@@ -54,5 +92,34 @@
     &.download {
       @apply btn-success;
     }
+  }
+}
+
+// Responsive design adjustments
+@media (max-width: 640px) {
+  .signature-pad-container {
+    @apply p-1;
+    
+    .signature-pad {
+      @apply mx-1;
+    }
+  }
+  
+  .controls {
+    @apply gap-2 mt-2;
+    
+    .control-btn {
+      @apply text-sm px-2 py-1;
+      
+      span {
+        @apply hidden;
+      }
+    }
+  }
+}
+
+@media (max-height: 600px) {
+  .signature-pad-container {
+    max-height: 70vh;
   }
 }

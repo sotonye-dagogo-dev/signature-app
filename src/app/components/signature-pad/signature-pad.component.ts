@@ -42,6 +42,11 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   showGCodeFeedback = false;
   gcodeFeedbackConfig: FeedbackConfig | null = null;
 
+  // Canvas sizing constants
+  private readonly MAX_HEIGHT_PERCENTAGE = 0.75; // 75% of screen height
+  private readonly ASPECT_RATIO = 4 / 3; // Preferred aspect ratio
+  private readonly MIN_HEIGHT = 400; // Minimum height in pixels
+
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private gcodeService: GcodeService
@@ -93,26 +98,71 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   private resizeCanvas(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const canvas = this.signaturePadElement.nativeElement;
     const wrapper = canvas.parentElement;
 
-    // Set canvas width and height based on parent container
-    const width = wrapper.clientWidth;
-    const height = wrapper.clientHeight || wrapper.clientWidth / 2; // 2:1 aspect ratio if height not set
+    // Preserve existing signature data before resizing
+    let existingData: any[] = [];
+    if (this.signaturePad && !this.signaturePad.isEmpty()) {
+      existingData = this.signaturePad.toData();
+    }
+
+    // Calculate optimal dimensions
+    const dimensions = this.calculateOptimalDimensions(wrapper);
+    
+    // Apply dimensions to canvas element
+    canvas.style.width = `${dimensions.width}px`;
+    canvas.style.height = `${dimensions.height}px`;
+
     // Scale canvas for high DPI displays
-    canvas.width = width * this.ratio;
-    canvas.height = height * this.ratio;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+    canvas.width = dimensions.width * this.ratio;
+    canvas.height = dimensions.height * this.ratio;
 
     // Scale context to counter the HiDPI scaling
     const ctx = canvas.getContext('2d');
-    ctx.scale(this.ratio, this.ratio);
-
-    // Clear existing data when resizing
-    if (this.signaturePad) {
-      this.signaturePad.clear();
+    if (ctx) {
+      ctx.scale(this.ratio, this.ratio);
     }
+
+    // Restore existing data if signature pad exists and has data
+    if (this.signaturePad && existingData.length > 0) {
+      // Small delay to ensure canvas is ready
+      setTimeout(() => {
+        this.signaturePad.fromData(existingData);
+      }, 0);
+    }
+  }
+
+  private calculateOptimalDimensions(wrapper: HTMLElement): { width: number; height: number } {
+    // Get available space
+    const containerWidth = wrapper.clientWidth;
+    const maxHeight = Math.floor(window.innerHeight * this.MAX_HEIGHT_PERCENTAGE);
+    
+    // Calculate dimensions based on aspect ratio
+    let width = containerWidth;
+    let height = Math.floor(width / this.ASPECT_RATIO);
+    
+    // Ensure height doesn't exceed maximum
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = Math.floor(height * this.ASPECT_RATIO);
+    }
+    
+    // Ensure minimum height
+    if (height < this.MIN_HEIGHT) {
+      height = this.MIN_HEIGHT;
+      width = Math.floor(height * this.ASPECT_RATIO);
+    }
+    
+    // Ensure width doesn't exceed container
+    if (width > containerWidth) {
+      width = containerWidth;
+      height = Math.floor(width / this.ASPECT_RATIO);
+    }
+
+    return { width, height };
   }
 
   // Undo/Redo functionality
@@ -131,7 +181,7 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
     this.redoStack = [];
   }
 
-   undo(): void {
+  undo(): void {
     if (!this.signaturePad || this.undoStack.length <= 1) return;
 
     // Move current state to redo stack
