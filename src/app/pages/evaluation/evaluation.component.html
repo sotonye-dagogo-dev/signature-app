@@ -189,7 +189,7 @@
                         <textarea formControlName="expectedToolpath"
                             placeholder="Enter expected toolpath as G-code or JSON array..." rows="10"
                             class="toolpath-textarea"
-                            (input)="onToolpathChange('expected', $event.target.value)"></textarea>
+                            (input)="onToolpathChange('expected', $any($event.target).value)"></textarea>
 
                         <div class="input-actions">
                             <button type="button" class="sample-button gcode-sample"
@@ -237,7 +237,7 @@
                         <textarea formControlName="actualToolpath"
                             placeholder="Enter actual toolpath as G-code or JSON array..." rows="10"
                             class="toolpath-textarea"
-                            (input)="onToolpathChange('actual', $event.target.value)"></textarea>
+                            (input)="onToolpathChange('actual', $any($event.target).value)"></textarea>
 
                         <div class="input-actions">
                             <button type="button" class="sample-button gcode-sample"

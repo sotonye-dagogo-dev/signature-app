@@ -4,7 +4,8 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
     faChartLine, faImage, faCode, faPlay, faInfo, faSpinner,
-    faCheck, faTimes, faDownload, faCopy, faLightbulb, faQuestionCircle
+    faCheck, faTimes, faDownload, faCopy, faLightbulb, faQuestionCircle,
+    faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -77,6 +78,7 @@ export class EvaluationComponent implements OnInit, OnDestroy {
     faCopy = faCopy;
     faLightbulb = faLightbulb;
     faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     // Add new properties for format handling
     expectedFormat: 'gcode' | 'json' | 'unknown' = 'unknown';
@@ -371,6 +373,27 @@ export class EvaluationComponent implements OnInit, OnDestroy {
                 coordinates: jsonValidation.toolpath
             };
         }
+    }
+
+    private handleEvaluationSuccess(metric: EvaluationMetric, data: any): void {
+        this.isEvaluating = false;
+
+        const result: EvaluationResult = {
+            metric,
+            data,
+            timestamp: new Date()
+        };
+
+        this.evaluationResults.unshift(result);
+        this.showModal = false;
+
+        // Show success feedback
+        this.showSuccessFeedback('Evaluation Complete', `${this.selectedMetricInfo?.name} evaluation completed successfully`);
+    }
+
+    private handleEvaluationError(error: string): void {
+        this.isEvaluating = false;
+        this.showErrorFeedback('Evaluation Failed', error);
     }
 
     // Get toolpath statistics for display
