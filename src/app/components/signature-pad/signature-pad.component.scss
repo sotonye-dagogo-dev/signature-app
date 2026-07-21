@@ -81,6 +81,16 @@
       }
     }
 
+    &.image {
+      @apply btn-secondary;
+      background: #7c3aed;
+      color: white;
+
+      &:hover {
+        background: #6d28d9;
+      }
+    }
+
     &.convert {
       @apply btn-info;
     }

@@ -21,6 +21,10 @@
             <fa-icon [icon]="faTrash"></fa-icon>
             <span>Clear</span>
         </button>
+        <button class="control-btn image" (click)="openImageToSvgModal()" title="Import image and convert to SVG">
+            <fa-icon [icon]="faCamera"></fa-icon>
+            <span>Camera</span>
+        </button>
         <button class="control-btn convert" (click)="convertToGCode()" title="Convert to G-Code">
             <fa-icon [icon]="faCode"></fa-icon>
             <span>G-Code</span>
@@ -47,3 +51,7 @@
         (onCancel)="onSubmissionCancel()">
     </app-signature-submission-form>
 </app-modal>
+
+<!-- Image-to-SVG Modal -->
+<app-image-to-svg-modal #imageToSvgModal (onSvgReady)="onImageSvgReady($event)" (onCancel)="onImageSvgCancel()">
+</app-image-to-svg-modal>

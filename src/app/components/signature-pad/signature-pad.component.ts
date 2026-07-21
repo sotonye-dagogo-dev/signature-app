@@ -2,18 +2,18 @@ import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, PLATFORM_ID
 import SignaturePad from 'signature_pad';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faTrash, faDownload, faPaperPlane, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faDownload, faPaperPlane, faUndo, faRedo, faCode, faCamera } from '@fortawesome/free-solid-svg-icons';
 import { ModalComponent } from '../modal/modal.component';
 import { SignatureSubmissionFormComponent } from '../signature-submission-form/signature-submission-form.component';
 import { SignatureSubmissionData } from '../../services/form/form-utilities.service';
 import { GcodeService } from '../../services/gcode/gcode.service';
 import { FeedbackDisplayComponent, FeedbackConfig } from '../feedback-display/feedback-display.component';
-import { faCode } from '@fortawesome/free-solid-svg-icons';
+import { ImageToSvgModalComponent } from '../image-to-svg-modal/image-to-svg-modal.component';
 
 @Component({
   selector: 'app-signature-pad',
   standalone: true,
-  imports: [FontAwesomeModule, CommonModule, ModalComponent, SignatureSubmissionFormComponent, FeedbackDisplayComponent],
+  imports: [FontAwesomeModule, CommonModule, ModalComponent, SignatureSubmissionFormComponent, FeedbackDisplayComponent, ImageToSvgModalComponent],
   templateUrl: './signature-pad.component.html',
   styleUrls: ['./signature-pad.component.scss']
 })
@@ -28,6 +28,7 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   faCode = faCode;
   faUndo = faUndo;
   faRedo = faRedo;
+  faCamera = faCamera;
 
   // Undo/Redo functionality
   private undoStack: any[] = [];
@@ -37,6 +38,9 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   // Modal state
   isSubmissionModalOpen = false;
   currentSvgData = '';
+
+  // Image-to-SVG modal
+  @ViewChild('imageToSvgModal') imageToSvgModal!: ImageToSvgModalComponent;
 
   // G-code conversion
   showGCodeFeedback = false;
@@ -368,5 +372,71 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
 
   onSubmissionCancel(): void {
     this.isSubmissionModalOpen = false;
+  }
+
+  openImageToSvgModal(): void {
+    if (!this.imageToSvgModal) return;
+    this.imageToSvgModal.open();
+  }
+
+  onImageSvgReady(svgData: string): void {
+    if (!svgData) return;
+
+    this.gcodeService.resetProgress();
+    this.showGCodeFeedback = true;
+
+    this.gcodeService.convertSvgToGcode(svgData, false).subscribe({
+      next: (result) => {
+        this.gcodeFeedbackConfig = {
+          type: 'custom',
+          message: 'G-Code Generated!',
+          subMessage: `${result?.metadata?.gcode_lines} lines generated`,
+          size: 'lg',
+          position: 'modal',
+          showCloseButton: true,
+          showActionButtons: true,
+          actionButtons: [
+            {
+              label: 'Download G-Code',
+              action: 'download',
+              style: 'primary',
+              icon: this.faDownload
+            }
+          ],
+          data: {
+            type: 'gcode',
+            gcode: result?.gcode,
+            metadata: result?.metadata
+          }
+        };
+      },
+      error: (error) => {
+        console.error('G-code conversion failed:', error);
+        this.gcodeFeedbackConfig = {
+          type: 'error',
+          message: 'Conversion Failed',
+          subMessage: error,
+          size: 'md',
+          position: 'modal',
+          showCloseButton: true
+        };
+      }
+    });
+
+    this.gcodeService.progress$.subscribe(progress => {
+      if (progress.status === 'uploading' || progress.status === 'processing') {
+        this.gcodeFeedbackConfig = {
+          type: 'progress',
+          message: progress.message,
+          progress: progress.progress,
+          size: 'md',
+          position: 'modal'
+        };
+      }
+    });
+  }
+
+  onImageSvgCancel(): void {
+    // Modal closed without confirming
   }
 }
