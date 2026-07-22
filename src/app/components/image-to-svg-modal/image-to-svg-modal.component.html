@@ -1,0 +1,92 @@
+@if (isOpen) {
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+    <div class="modal-container modal-lg">
+        <div class="modal-header">
+            <h2 class="modal-title">Import Image</h2>
+            <button type="button" class="close-button" (click)="close()">
+                <fa-icon [icon]="faTimes"></fa-icon>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Error message -->
+            @if (errorMessage) {
+            <div class="error-banner">
+                <fa-icon [icon]="faTimes" class="error-icon"></fa-icon>
+                <span>{{ errorMessage }}</span>
+            </div>
+            }
+
+            <!-- File input (hidden) -->
+            <input #fileInput type="file" accept="image/*,.svg" (change)="onFileSelected($event)" class="hidden-input" />
+
+            <!-- Initial upload prompt (shown when no image selected) -->
+            @if (!selectedFileName) {
+            <div class="upload-zone" (click)="triggerFileInput()">
+                <fa-icon [icon]="faCamera" class="upload-icon"></fa-icon>
+                <p class="upload-text">Click to select an image file</p>
+                <p class="upload-hint">Supports PNG, JPEG, GIF, BMP, WEBP, and SVG</p>
+            </div>
+            }
+
+            <!-- Loading state -->
+            @if (isLoading) {
+            <div class="loading-container">
+                <fa-icon [icon]="faCircleNotch" [spin]="true" class="loading-spinner"></fa-icon>
+                <p>Processing image...</p>
+            </div>
+            }
+
+            <!-- Preview area (shown when image is loaded) -->
+            @if (selectedFileName && !isLoading) {
+            <div class="preview-section">
+                <div class="file-info">
+                    <fa-icon [icon]="faImage" class="file-icon"></fa-icon>
+                    <span class="file-name">{{ selectedFileName }}</span>
+                    <button class="change-file-btn" (click)="triggerFileInput()">Change</button>
+                </div>
+
+                <!-- SVG Preview -->
+                <div class="svg-preview-container" [innerHTML]="previewSvg">
+                </div>
+
+                <!-- Edit controls -->
+                <div class="edit-controls">
+                    <span class="edit-label">Edit:</span>
+
+                    <button class="edit-btn" [class.active]="invertEnabled" (click)="applyInvert()" title="Invert colors">
+                        <fa-icon [icon]="faSun"></fa-icon>
+                        Invert
+                    </button>
+
+                    @if (!selectedFileName.toLowerCase().endsWith('.svg')) {
+                    <div class="threshold-control">
+                        <label class="threshold-label">
+                            <fa-icon [icon]="faAdjust"></fa-icon>
+                            Threshold: {{ thresholdValue }}
+                        </label>
+                        <input type="range" min="1" max="254" [value]="thresholdValue"
+                        (input)="onThresholdChange($any($event.target).value)"
+                        class="threshold-slider" />
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Hidden canvas for image processing -->
+            <canvas #previewCanvas class="hidden-canvas"></canvas>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="close()">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-primary" [disabled]="!rawSvgData" (click)="confirm()">
+                <fa-icon [icon]="faCheck"></fa-icon>
+                Use Image
+            </button>
+        </div>
+    </div>
+</div>
+}
