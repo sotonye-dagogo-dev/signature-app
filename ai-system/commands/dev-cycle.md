@@ -1,8 +1,8 @@
 # Dev Cycle Command
 
 > **Metadata**
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: (set on first run)
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if workflow processes change
 
 > **Overview:** The daily autonomous development loop. Executes a full plan → implement → review → test → document cycle for the next task in the queue. Lighter than `execute-feature.md` — suitable for well-defined, scoped tasks.

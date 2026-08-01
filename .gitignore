@@ -44,3 +44,4 @@ Thumbs.db
 
 # others
 src/environment/environment.prod.ts
+key.json

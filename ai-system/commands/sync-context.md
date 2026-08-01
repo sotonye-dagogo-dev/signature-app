@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: (set on first run)
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if sync triggers change
 
 > **Overview:** Lightweight mid-work documentation sync. Invoked _during_ work (not just at sprint end) whenever the agent notices docs and code diverging. Prevents context-rot accumulation across long sessions. Commands like `execute-feature.md` and `dev-cycle.md` explicitly invoke this at internal checkpoints.
