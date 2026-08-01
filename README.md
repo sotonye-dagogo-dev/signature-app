@@ -14,6 +14,11 @@ Run `ng generate component component-name` to generate a new component. You can 
 
 Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
+## CI/CD (Firebase Hosting)
+
+GitHub Actions runs a build on pull requests to `main`, and builds + deploys on pushes to `main`.
+Set the `FIREBASE_TOKEN` repository secret so the deploy step can authenticate.
+
 ## Running unit tests
 
 Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
