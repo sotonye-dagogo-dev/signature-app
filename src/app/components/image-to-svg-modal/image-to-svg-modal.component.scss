@@ -187,6 +187,16 @@
 .loading-spinner {
     font-size: 2rem;
     color: #059669;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .preview-section {
