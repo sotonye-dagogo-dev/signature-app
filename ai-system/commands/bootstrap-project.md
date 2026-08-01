@@ -2,7 +2,7 @@
 
 > **Metadata**
 >
-> - last-updated-by: bootstrap-project
+> - last-updated-by: update-ai-system
 > - last-verified-against-code: (set on completion)
 > - staleness-policy: run once per project — re-run only if project structure fundamentally changes
 

@@ -1,8 +1,8 @@
 # Resume Session Command
 
 > **Metadata**
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: (set on first run)
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if resume protocol or interruption conditions change
 
 > **Overview:** Recovers from interruption — crash, context reset, switching machines or agents. Reconstructs working state from `checkpoints/in-progress.md` + `checkpoints/session-log.md` + `planning/task-queue.md` without re-reading the whole repo. Runs a drift check before continuing.

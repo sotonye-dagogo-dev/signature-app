@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: (set on first run)
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify before trusting if project structure has changed
 
 > **Overview:** Project overview — the very first file any AI agent should read. Provides a 30-second orientation to what this project is, what stack it uses, and where to find everything.
@@ -12,24 +12,30 @@
 
 ## Quick Reference
 
-| Field            | Value                             |
-| ---------------- | --------------------------------- |
-| Project Name     | [name]                            |
-| Type             | [e.g. Web App / API / Mobile App] |
-| Primary Language | [e.g. TypeScript]                 |
-| Frontend         | [e.g. Next.js 14]                 |
-| Backend          | [e.g. Node.js + Express]          |
-| Database         | [e.g. PostgreSQL]                 |
-| Styling          | [e.g. Tailwind CSS + Ant Design]  |
-| Deployment       | [e.g. Vercel + Railway]           |
+| Field            | Value                                   |
+| ---------------- | --------------------------------------- |
+| Project Name     | SignatureApp                            |
+| Type             | Web App (Angular SPA with SSR)          |
+| Primary Language | TypeScript                              |
+| Frontend         | Angular 18 (standalone components)      |
+| Backend          | External Python API (PythonAnywhere)    |
+| Database         | External (backend-managed)              |
+| Styling          | Tailwind CSS + SCSS                     |
+| Deployment       | Firebase Hosting (via GitHub Actions)   |
 
 ---
 
 ## Key Modules
 
-| Module   | Location | Purpose        |
-| -------- | -------- | -------------- |
-| [module] | [path]   | [what it does] |
+| Module                | Location                              | Purpose                                   |
+| --------------------- | ------------------------------------- | ----------------------------------------- |
+| Signature pad         | src/app/components/signature-pad/     | Canvas signature drawing, SVG/G-code      |
+| Submission form       | src/app/components/signature-submission-form/ | HMAC-signed submission form     |
+| G-code conversion     | src/app/services/gcode/               | Convert SVG → G-code, parse results       |
+| Bluetooth / Arduino   | src/app/services/bluetooth, arduino/  | Device connection + G-code execution      |
+| Evaluation            | src/app/pages/evaluation/             | Signature quality assessment UI           |
+| Query                 | src/app/pages/query/                  | Retrieve signatures by email              |
+| Image-to-SVG modal    | src/app/components/image-to-svg-modal/| Raster image → SVG pipeline               |
 
 ---
 
@@ -43,4 +49,4 @@ Start with: `ai-system/protocols/entry-protocol.md`
 
 ## Active Development Focus
 
-[1–2 sentences about what is currently being built or fixed]
+CI/CD pipeline for Firebase Hosting is in place (GitHub Actions builds on PRs to `main`, deploys on push to `main`). Next step is enabling workflow permissions and verifying an end-to-end deploy.

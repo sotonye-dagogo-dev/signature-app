@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: (set on first run)
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if audit criteria change
 
 > **Overview:** Periodic deep consistency check. Compares `ai-system/` claims against actual repo state — architecture doc vs. real code structure, task-queue claims vs. git history, repair-system entries vs. whether the bug actually recurred. Produces a discrepancy report. Does not fix drift — only detects and reports it.

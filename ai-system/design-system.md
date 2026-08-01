@@ -1,8 +1,8 @@
 # Design System
 
 > **Metadata**
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: 2026-07-21
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if UI components or styling dependencies change
 
 > **Overview:** Visual language, component patterns, and UX principles. Agents building UI must read this before writing any frontend code.

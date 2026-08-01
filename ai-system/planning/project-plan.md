@@ -2,7 +2,7 @@
 
 > **Metadata**
 > - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-07-21
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if project scope or phase changes
 
 > **Overview:** High-level feature checklist organized by development phase.
@@ -59,10 +59,10 @@
 
 ## Phase 5 — Launch Preparation
 
-- [ ] Production environment configured
+- [x] Production environment configured
 - [ ] Security audit (auth, input validation, secrets)
 - [ ] Documentation complete
-- [ ] Deployment pipeline tested
+- [x] Deployment pipeline tested
 
 ---
 
@@ -72,3 +72,5 @@
 - [x] Phase 2 — Core Features (complete)
 - [x] Bluetooth control + Arduino integration
 - [x] Signature query + evaluation
+- [x] Image-to-SVG camera pipeline
+- [x] CI/CD pipeline (GitHub Actions → Firebase Hosting)

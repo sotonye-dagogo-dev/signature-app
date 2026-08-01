@@ -2,7 +2,7 @@
 
 > **Metadata**
 > - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-07-21
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify before each session
 
 > **Overview:** Sprint-level task queue with complexity tagging.
@@ -27,6 +27,7 @@
 | Size | Task | Status |
 |------|------|--------|
 | [L] | Camera/image input → SVG conversion pipeline with modal preview | [x] |
+| [XL] | CI/CD pipeline (GitHub Actions → Firebase Hosting) | [x] |
 
 ---
 
@@ -34,9 +35,9 @@
 
 | Size | Task |
 |------|------|
+| [S] | Enable `workflows` permission for GitHub App and verify end-to-end push-to-main deploy |
 | [M] | Add unit tests for camera-input component |
 | [S] | Verify existing tests still pass after changes |
-| [M] | Run update-ai-system.md to sync docs with new feature |
 
 ---
 
@@ -47,6 +48,7 @@
 | [M] | Improve mobile responsiveness for signature pad |
 | [S] | Add keyboard shortcut hints to buttons |
 | [M] | Performance optimization for large SVGs |
+| [M] | Consolidate duplicate build steps in deploy.yml (build artifact reuse) |
 
 ---
 
@@ -54,10 +56,12 @@
 
 | Task | Completed |
 |------|-----------|
-| — | — |
+| Camera/image → SVG pipeline | 2026-07-21 |
+| CI/CD deploy.yml + build/env scripts | 2026-08-01 |
+| update-ai-system sync | 2026-08-01 |
 
 ---
 
 ## Notes
 
-Initial bootstrap complete. First feature: camera/image-to-SVG pipeline for the signature pad.
+Initial bootstrap complete. First feature: camera/image-to-SVG pipeline for the signature pad. Second sprint: CI/CD pipeline for automated Firebase Hosting deployment.

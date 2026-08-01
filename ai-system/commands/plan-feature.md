@@ -1,8 +1,8 @@
 # Plan Feature Command
 
 > **Metadata**
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: (set on first run)
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if architecture or planning process changes
 
 > **Overview:** Analyzes architecture impact before any code is written. Produces a structured plan, identifies affected modules, and updates the task queue. Planning only — no implementation.

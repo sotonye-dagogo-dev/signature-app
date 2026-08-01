@@ -3,7 +3,7 @@
 > **Metadata**
 >
 > - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-07-21
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: historical entries do not go stale
 
 > **Overview:** Chronological log of completed development work.
@@ -56,3 +56,29 @@ Implemented the camera/image import feature for the signature pad. Users can now
 
 **Next Sprint Focus:**
 Verify build passes with compatible Node.js version and run tests
+
+---
+
+## 2026-08-01 — CI/CD Pipeline & Signing Key Handling
+
+**Summary:**
+Set up automated CI/CD for Firebase Hosting deployment. GitHub Actions now builds on PRs to `main` and builds + deploys to Firebase Hosting on pushes to `main`. The signing key (`BACKEND_SIGNING_KEY`) is sourced from a `.env` file at build time and injected into `src/environment/environment.ts` via an encrypt-then-write build script, with the plaintext value also committed as a static fallback.
+
+**Completed:**
+
+- `.github/workflows/deploy.yml` — build on PR, build + `firebase deploy --only hosting` on push to main (scoped `contents: read` token)
+- `build-with-cleanup.cjs` — encrypts signing key into environment.ts, runs `ng build`, restores placeholder env after build
+- `dev-with-env.cjs` — dev-server wrapper injecting env vars into environment.ts for local runs
+- `.env.example` — template for `BACKEND_SIGNING_KEY`
+- `src/environment/environment.ts` — signing key + per-build encrypted key triple (`encryptedSigningKey`, `keyDerivationSalt`, `iv`)
+- README CI/CD section documenting `FIREBASE_TOKEN` secret requirement
+
+**Key Changes:**
+
+- New: `.github/workflows/deploy.yml`, `build-with-cleanup.cjs`, `dev-with-env.cjs`, `.env.example`
+- Modified: `src/environment/environment.ts`, `README.md`
+
+**Next Sprint Focus:**
+Enable the workflow (requires `workflows` permission on the GitHub App) and confirm a real push-to-main deploy succeeds end-to-end.
+
+---
