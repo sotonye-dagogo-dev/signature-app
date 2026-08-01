@@ -1,8 +1,8 @@
 # Project Context
 
 > **Metadata**
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: 2026-07-21
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: re-verify if >10 sessions old or after major scope changes
 
 > **Overview:** Why this project exists, who it serves, and what constraints govern development. Agents should read this to understand the "why" behind the work.
@@ -39,7 +39,7 @@ Digital signature creation and G-code conversion platform. Users draw signatures
 
 Phase: Active Development
 
-Active sprint focus: Camera image input → SVG conversion pipeline
+Active sprint focus: CI/CD deployment pipeline — GitHub Actions build/deploy to Firebase Hosting is in place; the deploy step currently fails until the `FIREBASE_TOKEN` repository secret is configured (human action required; see README). Camera image input → SVG conversion pipeline is complete.
 
 ---
 

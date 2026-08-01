@@ -54,7 +54,31 @@ jobs:
       - name: Build app
         run: npm run build
 
-      - name: Deploy to Firebase Hosting
+      - name: Set up Firebase service account credentials
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" | base64 --decode > "$RUNNER_TEMP/google-application-credentials.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/google-application-credentials.json" >> "$GITHUB_ENV"
+
+      - name: Check Firebase credentials
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT == '' && secrets.FIREBASE_TOKEN == '' }}
+        run: |
+          echo "::error::No Firebase credentials configured."
+          echo "Recommended: set FIREBASE_SERVICE_ACCOUNT (base64 service-account JSON key)."
+          echo "Alternative: generate a token with 'npx firebase-tools login:ci' and store it as FIREBASE_TOKEN."
+          echo "Add a secret at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+          exit 1
+
+      - name: Deploy to Firebase Hosting (service account)
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: npx firebase-tools deploy --only hosting --project signature-eu --non-interactive
+
+      - name: Deploy to Firebase Hosting (token)
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT == '' }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: npx firebase-tools deploy --only hosting --token "$FIREBASE_TOKEN"
+        run: npx firebase-tools deploy --only hosting --project signature-eu --non-interactive --token "$FIREBASE_TOKEN"

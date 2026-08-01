@@ -2,7 +2,7 @@
 
 > **Metadata**
 > - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-07-21
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: auto-regenerable — can be derived from import analysis tools.
 
 > **Overview:** Maps how modules depend on each other.
@@ -18,6 +18,7 @@ SignaturePadComponent
   → ModalComponent (submission dialog)
   → SignatureSubmissionFormComponent (form inside modal)
   → FeedbackDisplayComponent (progress/result display)
+  → ImageToSvgModalComponent (camera/image → SVG)
 
 SignatureSubmissionFormComponent
   → FormUtilitiesService (form creation, validation)
@@ -28,28 +29,46 @@ GcodeService
   → HttpClient
   → environment.ts (API URLs, encryption config)
 
+GcodeParserService
+  → (standalone — parses G-code responses)
+
+EvaluationService
+  → HttpClient
+  → environment.ts (eval API URLs)
+  → GcodeParserService (parse G-code results)
+
+FormUtilitiesService
+  → GcodeService (faculty/department option loading)
+  → GcodeParserService (validation helpers)
+
+DbService
+  → HttpClient
+  → environment.ts (API URLs)
+  → GcodeService (signed submission/recovery helpers)
+
 BluetoothControlComponent
   → BluetoothService
 
 DeviceSetupComponent
-  → BluetoothService
   → ArduinoService
+  → BluetoothControlComponent
 
 ArduinoService
   → BluetoothService
 
 QueryComponent
   → DbService
-
-DbService
-  → HttpClient
+  → FeedbackDisplayComponent
 
 EvaluationComponent
-  → GcodeService
+  → ModalComponent
   → FileDropComponent
+  → FeedbackDisplayComponent
+  → FormUtilitiesService
+  → EvaluationService
 
 FileDropComponent
-  → (standalone)
+  → FormUtilitiesService (file validation)
 
 ModalComponent
   → (standalone — only FontAwesome icons)
@@ -59,6 +78,10 @@ FeedbackDisplayComponent
 
 HeaderComponent
   → ThemeToggleComponent
+  → route.utils.ts (nav generation from routes)
+
+FooterComponent
+  → (standalone)
 
 ImageToSvgModalComponent
   → DomSanitizer (safe HTML preview)
@@ -82,10 +105,12 @@ AppComponent
 | signature_pad | Canvas-based signature drawing | SignaturePadComponent |
 | @fortawesome/angular-fontawesome | Icon library | Most components |
 | @fortawesome/free-solid-svg-icons | Solid icons set | Most components |
-| @angular/common/http | HTTP client | GcodeService, DbService |
+| @angular/common/http | HTTP client | GcodeService, DbService, EvaluationService |
 | @angular/router | Client-side routing | AppComponent, pages |
-| @angular/forms | Reactive forms | SignatureSubmissionFormComponent |
+| @angular/forms | Reactive forms | SignatureSubmissionFormComponent, EvaluationComponent |
 | @angular/ssr | Server-side rendering | server.ts, main.server.ts |
+| @angular/fire | Firebase integration | — (installed, hosting via firebase-tools) |
+| express | SSR HTTP server | server.ts |
 | rxjs | Reactive extensions | All services |
 
 ---
@@ -100,6 +125,7 @@ None detected.
 
 - Pages depend on Components and Services — not the other way around
 - Components may depend on Services — not the other way around
-- Services may depend on other Services (e.g., ArduinoService → BluetoothService)
+- Services may depend on other Services (e.g., ArduinoService → BluetoothService, EvaluationService → GcodeParserService, DbService → GcodeService)
 - Utils must have no dependencies on application modules
 - Environment module must not depend on any application code
+- The Angular App config must not import application code (only router/http/hydration providers)

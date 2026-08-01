@@ -3,7 +3,7 @@
 > **Metadata**
 >
 > - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-07-21
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: historical entries do not go stale
 
 > **Overview:** Chronological log of completed development work.
@@ -56,3 +56,77 @@ Implemented the camera/image import feature for the signature pad. Users can now
 
 **Next Sprint Focus:**
 Verify build passes with compatible Node.js version and run tests
+
+---
+
+## 2026-08-01 — CI/CD Pipeline & Signing Key Handling
+
+**Summary:**
+Set up automated CI/CD for Firebase Hosting deployment. GitHub Actions now builds on PRs to `main` and builds + deploys to Firebase Hosting on pushes to `main`. The signing key (`BACKEND_SIGNING_KEY`) is sourced from a `.env` file at build time and injected into `src/environment/environment.ts` via an encrypt-then-write build script, with the plaintext value also committed as a static fallback.
+
+**Completed:**
+
+- `.github/workflows/deploy.yml` — build on PR, build + `firebase deploy --only hosting` on push to main (scoped `contents: read` token)
+- `build-with-cleanup.cjs` — encrypts signing key into environment.ts, runs `ng build`, restores placeholder env after build
+- `dev-with-env.cjs` — dev-server wrapper injecting env vars into environment.ts for local runs
+- `.env.example` — template for `BACKEND_SIGNING_KEY`
+- `src/environment/environment.ts` — signing key + per-build encrypted key triple (`encryptedSigningKey`, `keyDerivationSalt`, `iv`)
+- README CI/CD section documenting `FIREBASE_TOKEN` secret requirement
+
+**Key Changes:**
+
+- New: `.github/workflows/deploy.yml`, `build-with-cleanup.cjs`, `dev-with-env.cjs`, `.env.example`
+- Modified: `src/environment/environment.ts`, `README.md`
+
+**Next Sprint Focus:**
+Enable the workflow (requires `workflows` permission on the GitHub App) and confirm a real push-to-main deploy succeeds end-to-end.
+
+---
+
+## 2026-08-01 — Firebase Deploy Failure Diagnosis
+
+**Summary:**
+GitHub Actions run #3 passed the `build` job but the `deploy` job failed at "Deploy to Firebase Hosting" (exit code 1) with a Firebase authentication error. Diagnosis: `secrets.FIREBASE_TOKEN` is unset/invalid, so `firebase-tools` runs with an empty token. The workflow was hardened (secret guard step, explicit `--project signature-eu`, `--non-interactive`) and the README now documents exact secret setup. Resolution is blocked on a human configuring the `FIREBASE_TOKEN` repo secret.
+
+**Completed:**
+
+- Root-caused run #3 deploy failure to missing/invalid `FIREBASE_TOKEN` secret
+- Added "Check Firebase token secret" guard step to `deploy.yml` (fail-fast with instructions)
+- Pinned deploy target explicitly (`--project signature-eu`) and added `--non-interactive`
+- Documented `firebase login:ci` → repo secret setup in README
+- Reconciled all 41 ai-system docs against post-CI/CD repo state
+
+**Key Changes:**
+
+- Modified: `.github/workflows/deploy.yml`, `README.md`
+- Modified: `ai-system/` (41 docs) — metadata refresh + CI/CD sprint reconciliation
+
+**Next Sprint Focus:**
+Configure the `FIREBASE_TOKEN` repository secret (human action required) and re-run the deploy workflow to confirm a green end-to-end deploy.
+
+---
+
+## 2026-08-01 — Service-Account Deploy Auth (Long-Term Fix)
+
+**Summary:**
+Replaced the deprecated `FIREBASE_TOKEN`-only auth with a preferred service-account path. `deploy.yml` now decodes the `FIREBASE_SERVICE_ACCOUNT` (base64 service-account JSON key) secret into a temp credentials file, exports `GOOGLE_APPLICATION_CREDENTIALS`, and deploys via Application Default Credentials. The legacy `--token` path remains as an automatic fallback when only `FIREBASE_TOKEN` is set, and a guard step fails fast with setup instructions if neither secret is configured.
+
+**Completed:**
+
+- `deploy.yml`: added "Set up Firebase service account credentials" step (decode base64 → `GOOGLE_APPLICATION_CREDENTIALS`)
+- `deploy.yml`: split deploy into two mutually-exclusive steps — service-account/ADC path and token fallback
+- `deploy.yml`: updated credential guard to check both secrets (`FIREBASE_SERVICE_ACCOUNT` and `FIREBASE_TOKEN`)
+- README: documented service-account setup (IAM roles, key download, base64 encoding, secret creation) as the recommended path, with `FIREBASE_TOKEN` demoted to a legacy fallback
+- ai-system docs updated to reflect the new auth preference
+
+**Key Changes:**
+
+- Modified: `.github/workflows/deploy.yml`, `README.md`
+- Modified: `ai-system/` — lessons-learned, project-decisions, system-architecture, task-queue, dev-history
+
+**Next Sprint Focus:**
+A human creates the service account, stores its base64 JSON key as `FIREBASE_SERVICE_ACCOUNT`, then verifies an end-to-end push-to-main deploy.
+
+---
+
+

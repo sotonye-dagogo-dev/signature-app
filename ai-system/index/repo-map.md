@@ -3,7 +3,7 @@
 > **Metadata**
 >
 > - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-07-21
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: auto-regenerable — can be derived from `Get-ChildItem -Recurse` or `tree` command.
 
 > **Overview:** Visual map of the project folder structure with purpose descriptions.
@@ -23,7 +23,7 @@ signature-app/
 │   ├── styles/
 │   │   └── _variables.scss        → SCSS color/typography variables
 │   ├── environment/
-│   │   └── environment.ts         → API URLs, encryption keys
+│   │   └── environment.ts         → API URLs, HMAC signing/encryption keys
 │   └── app/
 │       ├── app.component.*        → Root component
 │       ├── app.config.ts          → App providers (router, http, hydration)
@@ -64,10 +64,19 @@ signature-app/
 ├── tailwind.config.js             → Tailwind CSS config
 ├── postcss.config.js              → PostCSS config
 ├── firebase.json                  → Firebase hosting config
+├── .firebaserc                    → Firebase project mapping (signature-eu)
+├── .env.example                   → Template for BACKEND_SIGNING_KEY env file
+├── build-with-cleanup.cjs         → Build script: encrypts signing key into environment.ts, runs ng build, cleans up
+├── dev-with-env.cjs               → Dev server wrapper that injects env vars into environment.ts
 ├── package.json                   → Dependencies and scripts
 ├── tsconfig.json                  → Base TS config
 ├── tsconfig.app.json              → App TS config
 ├── tsconfig.spec.json             → Test TS config
+│
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml             → CI/CD: build on PRs to main, build + Firebase deploy on push to main
+│       └── opencode.yml           → OpenCode local trigger for /oc design and dev comments
 │
 └── ai-system/                     → AI development system
 ```
@@ -79,12 +88,14 @@ signature-app/
 | Directory | Purpose | Key Files |
 | --------- | ------- | --------- |
 | src/app/components/ | Reusable, standalone UI components | signature-pad, modal, feedback-display, image-to-svg-modal |
-| src/app/pages/ | Route-level page components | home, device-setup, query, evaluation |
-| src/app/services/ | Business logic and external API access | gcode.service, bluetooth.service |
+| src/app/pages/ | Route-level page components | home, device-setup, query, evaluation, not-found |
+| src/app/services/ | Business logic and external API access | gcode.service, gcode-parser.service, evaluation.service, db.service |
 | src/app/directives/ | Angular structural directives | bluetooth-available.directive |
 | src/app/utils/ | Shared utility functions | route.utils.ts |
 | src/environment/ | Environment configuration | environment.ts |
 | src/styles/ | SCSS variables and mixins | _variables.scss |
+| .github/workflows/ | GitHub Actions CI/CD | deploy.yml, opencode.yml |
+| root build scripts | Env-injected build/dev tooling | build-with-cleanup.cjs, dev-with-env.cjs |
 
 ---
 

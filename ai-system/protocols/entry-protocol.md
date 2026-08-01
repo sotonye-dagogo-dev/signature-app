@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: bootstrap-project
-> - last-verified-against-code: 2026-07-21
+> - last-updated-by: update-ai-system
+> - last-verified-against-code: 2026-08-01
 > - staleness-policy: this file changes rarely — trust unless explicitly flagged
 
 > **Overview:** The mandatory entry procedure for every AI session. Read this first before any other file. It defines how to discover available tools, which docs to load based on context budget, and how to start any session correctly.
