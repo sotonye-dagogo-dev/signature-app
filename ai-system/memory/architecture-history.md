@@ -1,8 +1,8 @@
 # Architecture History
 
 > **Metadata**
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: historical entries do not go stale
 
 > **Overview:** Chronological record of how the system architecture has evolved.
@@ -31,3 +31,16 @@ Automate deployment so pushes/merges to `main` reach Firebase Hosting without ma
 - New `.github/workflows/deploy.yml` (build + deploy) and `.github/workflows/opencode.yml` (OpenCode comment triggers)
 - New root build scripts: `build-with-cleanup.cjs`, `dev-with-env.cjs`
 - New `.env.example`; `src/environment/environment.ts` now carries `signingKey`, `encryptedSigningKey`, `keyDerivationSalt`, `iv`
+
+### 2026-09-05 — Frontend Hardening (Non-Breaking)
+
+**State:**
+No architecture change. Hardened UX/error handling platform-wide: centralized `sanitizeMessage()` in services (status 0 → generic message, URL stripping), fixed `convertSvgToGcode` observable pipeline (`tap`+`filter(Response)`), made `SignaturePadComponent.isConverting` the single source for disabled/spinner and unified conversion helper for canvas + image flows, added `ImageToSvgModal.loadingPhase` for phase feedback, disabled form/inputs while submitting, and mirrored disabled states on evaluation/query pages. All handled via existing `FeedbackDisplayComponent` types; no new dependencies.
+
+**Rationale:**
+Fix the leaked-backend-URL bug and "stuck-feeling" UX without breaking contracts; frontend-only scope (backend deferred) requires deterministic, testable UI states and never leaking infrastructure URLs.
+
+**Key Changes:**
+- `GcodeService`/`EvaluationService`/`DbService` error sanitization
+- `SignaturePadComponent` + `ImageToSvgModal` + `SignatureSubmissionForm` + `Evaluation`/`Query` page disabled/loading states
+- `design-system.md` UX principles and `repair-system.md` error pattern updated

@@ -24,6 +24,8 @@ export class ImageToSvgModalComponent {
 
   isOpen = false;
   isLoading = false;
+  // Phase for richer feedback: 'idle' | 'reading' | 'converting' | 'preview' helps UI describe state
+  loadingPhase: 'reading' | 'converting' | 'processing' = 'reading';
   errorMessage = '';
 
   selectedFileName = '';
@@ -60,6 +62,7 @@ export class ImageToSvgModalComponent {
     this.invertEnabled = false;
     this.thresholdValue = 128;
     this.isLoading = false;
+    this.loadingPhase = 'reading';
   }
 
   close(): void {
@@ -93,6 +96,7 @@ export class ImageToSvgModalComponent {
 
   private handleSvgFile(file: File): void {
     this.isLoading = true;
+    this.loadingPhase = 'reading';
     const reader = new FileReader();
     reader.onload = () => {
       const svgText = reader.result as string;
@@ -101,6 +105,7 @@ export class ImageToSvgModalComponent {
         this.isLoading = false;
         return;
       }
+      this.loadingPhase = 'processing';
       this.rawSvgData = svgText;
       this.renderSvgPreview(svgText);
       this.isLoading = false;
@@ -114,9 +119,11 @@ export class ImageToSvgModalComponent {
 
   private handleRasterImage(file: File): void {
     this.isLoading = true;
+    this.loadingPhase = 'reading';
     const reader = new FileReader();
     reader.onload = () => {
       const imageUrl = reader.result as string;
+      this.loadingPhase = 'converting';
       this.convertRasterToSvg(imageUrl);
     };
     reader.onerror = () => {
@@ -310,9 +317,11 @@ export class ImageToSvgModalComponent {
       return;
     }
     this.isLoading = true;
+    this.loadingPhase = 'processing';
     if (this.selectedFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = () => {
+        this.loadingPhase = 'converting';
         this.convertRasterToSvg(reader.result as string);
       };
       reader.readAsDataURL(this.selectedFile);
@@ -337,6 +346,19 @@ export class ImageToSvgModalComponent {
     if (event.target === event.currentTarget) {
       this.close();
     }
+  }
+
+  get loadingMessage(): string {
+    switch (this.loadingPhase) {
+      case 'reading': return 'Reading image...';
+      case 'converting': return 'Converting image to SVG...';
+      case 'processing': return 'Generating preview...';
+      default: return 'Processing image...';
+    }
+  }
+
+  get canConfirm(): boolean {
+    return !!this.rawSvgData && !this.isLoading;
   }
 
   onThresholdChange(value: string): void {

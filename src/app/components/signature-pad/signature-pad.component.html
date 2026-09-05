@@ -5,35 +5,36 @@
     <div class="controls">
         <button class="control-btn undo" 
                 (click)="undo()" 
-                [disabled]="!canUndo()"
+                [disabled]="!canUndo() || isConverting"
                 title="Undo last stroke">
             <fa-icon [icon]="faUndo"></fa-icon>
             <span>Undo</span>
         </button>
         <button class="control-btn redo" 
                 (click)="redo()" 
-                [disabled]="!canRedo()"
+                [disabled]="!canRedo() || isConverting"
                 title="Redo last undone stroke">
             <fa-icon [icon]="faRedo"></fa-icon>
             <span>Redo</span>
         </button>
-        <button class="control-btn clear" (click)="clear()" title="Clear signature">
+        <button class="control-btn clear" (click)="clear()" [disabled]="isConverting" title="Clear signature">
             <fa-icon [icon]="faTrash"></fa-icon>
             <span>Clear</span>
         </button>
-        <button class="control-btn image" (click)="openImageToSvgModal()" title="Import image and convert to SVG">
+        <button class="control-btn image" (click)="openImageToSvgModal()" [disabled]="isConverting" title="Import image and convert to SVG">
             <fa-icon [icon]="faCamera"></fa-icon>
             <span>Camera</span>
         </button>
-        <button class="control-btn convert" (click)="convertToGCode()" title="Convert to G-Code">
-            <fa-icon [icon]="faCode"></fa-icon>
-            <span>G-Code</span>
+        <button class="control-btn convert" (click)="convertToGCode()" [disabled]="isConverting" title="Convert to G-Code">
+            <fa-icon *ngIf="!isConverting" [icon]="faCode"></fa-icon>
+            <fa-icon *ngIf="isConverting" [icon]="faSpinner" class="spinner"></fa-icon>
+            <span>{{ isConverting ? 'Converting...' : 'G-Code' }}</span>
         </button>
-        <button class="control-btn submit" (click)="submit()" title="Submit signature">
+        <button class="control-btn submit" (click)="submit()" [disabled]="isConverting" title="Submit signature">
             <fa-icon [icon]="faPaperPlane"></fa-icon>
             <span>Submit</span>
         </button>
-        <button class="control-btn download" (click)="download()" title="Download signature">
+        <button class="control-btn download" (click)="download()" [disabled]="isConverting" title="Download signature">
             <fa-icon [icon]="faDownload"></fa-icon>
             <span>Download</span>
         </button>

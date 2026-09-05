@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: this file is overwritten every session — always current
 
 ---
@@ -13,10 +13,10 @@
 **Status:** Completed
 
 **Command Being Executed:**
-update-ai-system.md
+execute-feature.md → update-ai-system.md
 
 **Directive / Task:**
-Sprint-end deep synchronization of ai-system docs against repo state (CI/CD sprint) + workflow analysis of failed Firebase deploy run
+Platform-wide non-breaking UX hardening: loading/parsing phase feedback + disabled submit states + sanitize `Http failure response for https://.../api/convert: 0` leak; ensure image upload→convert to G-code end-to-end is functional.
 
 ---
 
