@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpEventType } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpEventType, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, throwError } from 'rxjs';
-import { map, catchError, tap, switchMap } from 'rxjs/operators';
+import { map, catchError, tap, switchMap, filter } from 'rxjs/operators';
 import { data } from '../../../environment/environment';
 
 export interface GCodeConversionResult {
@@ -95,17 +95,34 @@ export class GcodeService {
     });
   }
 
+  private sanitizeMessage(raw: string): string {
+    if (!raw) return 'An unexpected error occurred. Please try again.';
+    let s = raw.trim();
+    // Remove backend URLs if leaked in HttpClient message
+    s = s.replace(/https?:\/\/[^\s"']+/g, '[service]');
+    s = s.replace(/Http failure response for[^:]*:\s*0\s*.*/gi, 'Unable to connect to the service. Please check your internet connection and try again.');
+    if (/Unknown Error/i.test(s) && s.includes('[service]')) {
+      return 'Unable to connect to the service. Please check your internet connection and try again.';
+    }
+    // Ensure we never surface raw URLs
+    if (s.includes('http')) {
+      return 'Unable to connect to the service. Please check your internet connection and try again.';
+    }
+    return s;
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An error occurred while processing your request';
 
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = `Error: ${error.error.message}`;
+      errorMessage = this.sanitizeMessage(error.error.message);
     } else {
-      // Server-side error
       switch (error.status) {
+        case 0:
+          errorMessage = 'Unable to connect to the service. Please check your internet connection and try again.';
+          break;
         case 400:
-          errorMessage = 'Invalid request. Please check your input data.';
+          errorMessage = this.sanitizeMessage(error.error?.details || 'Invalid request. Please check your input data.');
           break;
         case 413:
           errorMessage = 'File size too large. Maximum allowed size is 10MB.';
@@ -117,13 +134,14 @@ export class GcodeService {
           errorMessage = 'Server error. Please try again later.';
           break;
         default:
-          errorMessage = `Error: ${error.error?.details || error.message}`;
+          errorMessage = this.sanitizeMessage(error.error?.details || error.error?.message || error.message || 'An unexpected error occurred. Please try again.');
       }
     }
 
     this.updateProgress({
       status: 'error',
-      error: errorMessage
+      error: errorMessage,
+      message: errorMessage
     });
 
     return throwError(() => errorMessage);
@@ -139,18 +157,9 @@ export class GcodeService {
     if (isFile && svgData instanceof File) {
       formData.append('svg_file', svgData);
     } else {
-      // For raw SVG string, ensure it's properly encoded as UTF-8
       const svgString = typeof svgData === 'string' ? svgData : svgData.toString();
-
-      // Create a proper SVG blob with UTF-8 encoding
       const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-
-      // You can either send as file or as raw data depending on API preference
-      // Option 1: Send as file
       formData.append('svg_file', svgBlob, 'signature.svg');
-
-      // Option 2: Send as raw data (uncomment if API prefers this)
-      // formData.append('svg_data', svgString);
     }
 
     const headers = new HttpHeaders({
@@ -162,37 +171,31 @@ export class GcodeService {
       reportProgress: true,
       observe: 'events'
     }).pipe(
-      map(event => {
-        switch (event.type) {
-          case HttpEventType.UploadProgress:
-            if (event.total) {
-              const progress = Math.round(100 * event.loaded / event.total);
-              this.updateProgress({
-                progress: progress,
-                status: 'uploading',
-                message: `Uploading... ${progress}%`
-              });
-            }
-            break;
-          case HttpEventType.Response:
-            this.updateProgress({
-              progress: 100,
-              status: 'completed',
-              message: 'G-code conversion completed successfully!'
-            });
-            return event.body as GCodeConversionResult;
+      tap(event => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          const progress = Math.round(100 * event.loaded / event.total);
+          this.updateProgress({
+            progress: progress,
+            status: 'uploading',
+            message: `Uploading... ${progress}%`
+          });
+        } else if (event.type === HttpEventType.Sent) {
+          this.updateProgress({ status: 'uploading', progress: 10, message: 'Uploading SVG data...' });
         }
-        return null as any;
       }),
-      tap(() => {
+      filter(event => event.type === HttpEventType.Response),
+      map(event => {
+        const res = event as HttpResponse<GCodeConversionResult>;
         this.updateProgress({
-          status: 'processing',
-          progress: 50,
-          message: 'Processing SVG data...'
+          progress: 100,
+          status: 'completed',
+          message: 'G-code conversion completed successfully!'
         });
+        return res.body as GCodeConversionResult;
       }),
       catchError(error => {
-        console.error('G-code conversion failed:', error);
+        // Avoid leaking backend URL in console in production; keep generic log
+        console.error('G-code conversion failed:', error?.status, error?.message ? '[sanitized]' : error);
         return this.handleError(error);
       })
     );

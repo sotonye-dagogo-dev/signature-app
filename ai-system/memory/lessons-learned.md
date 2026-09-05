@@ -1,8 +1,8 @@
 # Lessons Learned
 
 > **Metadata**
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: each entry has its own staleness — check supersedes links
 
 > **Overview:** Practical knowledge accumulated during development.
@@ -48,6 +48,22 @@
 **Apply when:** Authenticating the Firebase deploy step in CI.
 
 **Lesson:** `FIREBASE_TOKEN`/`--token` (from `login:ci`) is deprecated by firebase-tools and will be removed in a future major version. The supported replacement is a service-account key exposed as `GOOGLE_APPLICATION_CREDENTIALS`. In `deploy.yml` the deploy job now: (1) decodes the base64 `FIREBASE_SERVICE_ACCOUNT` secret to a temp JSON file and sets `GOOGLE_APPLICATION_CREDENTIALS`; (2) runs `firebase deploy` with no `--token` when that secret is present (ADC path); (3) falls back to the legacy `--token` path only when the service-account secret is absent. Service accounts are project-scoped, don't need browser sign-in, and their keys can be rotated. Required roles for hosting: `Firebase Hosting Admin` + `Service Account User` (plus Cloud Functions/Cloud Run Admin if deploying functions or the SSR frameworks backend).
+
+**Status:** Active
+
+## Never surface HttpErrorResponse.message — it contains the backend URL
+
+**Apply when:** Mapping HTTP errors to user-facing messages (especially `status 0` network/CORS/offline).
+
+**Lesson:** `HttpErrorResponse.message` for a failed `HttpClient` call is `Http failure response for https://<backend>/api/...: 0 Unknown Error`. If `handleError` does `throwError(() => error.message)` or `error.error?.details || error.message`, the backend URL propagates to `FeedbackDisplay` and is shown to users. Fix: add a `sanitizeMessage()` helper that strips `https?://` and maps `status 0` to `Unable to connect to the service. Please check your internet connection and try again.` Always handle `case 0` explicitly; never use raw `error.message` as a fallback without sanitizing.
+
+**Status:** Active
+
+## Async buttons must reflect in-flight state via disabled + spinner/label change
+
+**Apply when:** Any page does an HTTP or file-processing async action (convert, submit, evaluate, search, image→SVG).
+
+**Lesson:** Without `[disabled]="isConverting|isSubmitting|isEvaluating|isSearching|isLoading"` and a spinner/label change, users think the UI is stuck and click again, causing duplicate requests and conflicting progress states. The fix is platform-wide: introduce a boolean per flow, set it before the async call, bind it to every related button/input, show a spinner in the button (`faSpinner` with `spin` animation) and a progress bar via `FeedbackDisplay[type=progress]`, and clear it in both `next` and `error` handlers plus modal close. For multi-phase client-side work (reading file → converting → preview) use a `loadingPhase` enum to drive a phase-specific message.
 
 **Status:** Active
 

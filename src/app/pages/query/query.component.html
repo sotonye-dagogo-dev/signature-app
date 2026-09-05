@@ -15,7 +15,7 @@
                     <div class="input-wrapper">
                         <fa-icon [icon]="faEnvelope" class="input-icon"></fa-icon>
                         <input type="email" formControlName="email" placeholder="Enter email address to search..."
-                            class="search-input" [class.error]="!!emailError" />
+                            class="search-input" [class.error]="!!emailError" [attr.disabled]="isSearching ? '' : null" />
                     </div>
                     <button type="submit" class="search-button" [disabled]="isSearching || searchForm.invalid">
                         <fa-icon *ngIf="!isSearching" [icon]="faSearch"></fa-icon>

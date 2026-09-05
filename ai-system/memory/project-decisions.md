@@ -1,8 +1,8 @@
 # Project Decisions
 
 > **Metadata**
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: each entry has its own staleness — check supersedes links
 
 > **Overview:** Log of significant architectural, technical, and product decisions.
@@ -121,5 +121,28 @@ Run #3's deploy job failed with a Firebase auth error solely because `secrets.FI
 - Requires a human to create a service account with `Firebase Hosting Admin` + `Service Account User` roles, download its JSON key, base64-encode it, and store it as the `FIREBASE_SERVICE_ACCOUNT` repo secret
 - Once set, the service-account path is used; the token secret becomes an unused fallback
 - `FIREBASE_SERVICE_ACCOUNT` and `FIREBASE_TOKEN` secrets are both referenced; the workflow guard fails fast if neither is set
+
+---
+
+## Platform-wide async UX: phase feedback + disabled submit states + sanitized errors (non-breaking)
+
+**Decision:** Apply loading-phase feedback, disabled submit states, and backend-URL sanitization as a platform-wide non-breaking change across all pages
+**Date:** 2026-09-05
+**Made by:** opencode (execute-feature — UX hardening)
+**Supersedes:** None
+**Superseded by:** None
+
+**Reason:**
+Users reported feeling "stuck" when adding images (no parsing/loading phase) and submit buttons not reflecting in-flight state, plus a visible `Http failure response for https://.../api/convert: 0 undefined` leak on the image→G-code flow. The fix must be non-breaking, frontend-only (backend investigation deferred), functional end-to-end, and not reveal backend URLs. Hardening all async flows at once avoids per-page drift.
+
+**Alternatives Considered:**
+- Per-page fix only for image→G-code: rejected — leaves same pattern broken on evaluation/query/submission
+- Global HTTP interceptor for error sanitizing: considered but per-service `sanitizeMessage()` is lower risk and matches existing `handleError` patterns without new providers
+- New global loading overlay component: deferred — per-component `isConverting`/`isEvaluating`/`isSearching`/`isLoading` + `FeedbackDisplay` progress is already designed and non-breaking
+
+**Implications:**
+- `GcodeService`, `EvaluationService`, `DbService` now never surface raw URLs; status 0 maps to generic connectivity message
+- All buttons/inputs for async actions are `[disabled]` when in-flight and show spinner/label change; image modal adds `loadingPhase` enum
+- No new dependencies or architecture changes; existing `FeedbackDisplay` types (`progress`/`error`/`custom`) reused
 
 ---

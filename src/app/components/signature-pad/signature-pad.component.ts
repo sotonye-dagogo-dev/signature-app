@@ -2,13 +2,15 @@ import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, PLATFORM_ID
 import SignaturePad from 'signature_pad';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faTrash, faDownload, faPaperPlane, faUndo, faRedo, faCode, faCamera } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faDownload, faPaperPlane, faUndo, faRedo, faCode, faCamera, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ModalComponent } from '../modal/modal.component';
 import { SignatureSubmissionFormComponent } from '../signature-submission-form/signature-submission-form.component';
 import { SignatureSubmissionData } from '../../services/form/form-utilities.service';
 import { GcodeService } from '../../services/gcode/gcode.service';
 import { FeedbackDisplayComponent, FeedbackConfig } from '../feedback-display/feedback-display.component';
 import { ImageToSvgModalComponent } from '../image-to-svg-modal/image-to-svg-modal.component';
+import { Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-signature-pad',
@@ -29,6 +31,7 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   faUndo = faUndo;
   faRedo = faRedo;
   faCamera = faCamera;
+  faSpinner = faSpinner;
 
   // Undo/Redo functionality
   private undoStack: any[] = [];
@@ -45,6 +48,10 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   // G-code conversion
   showGCodeFeedback = false;
   gcodeFeedbackConfig: FeedbackConfig | null = null;
+  isConverting = false;
+
+  private destroy$ = new Subject<void>();
+  private progressSub: Subscription | null = null;
 
   // Canvas sizing constants
   private readonly MAX_HEIGHT_PERCENTAGE = 0.75; // 75% of screen height
@@ -67,10 +74,12 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Clean up
     if (this.signaturePad) {
       this.signaturePad.off();
     }
+    this.progressSub?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   @HostListener('window:resize')
@@ -79,7 +88,6 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   private initializeSignaturePad() {
-    // Initialize the signature pad
     const canvas = this.signaturePadElement.nativeElement;
     this.resizeCanvas();
 
@@ -92,12 +100,10 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
       throttle: 16, // max 60fps
     });
 
-    // Add event listeners for undo/redo functionality
     this.signaturePad.addEventListener('endStroke', () => {
       this.saveState();
     });
 
-    // Save initial empty state
     this.saveState();
   }
 
@@ -107,32 +113,25 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
     const canvas = this.signaturePadElement.nativeElement;
     const wrapper = canvas.parentElement;
 
-    // Preserve existing signature data before resizing
     let existingData: any[] = [];
     if (this.signaturePad && !this.signaturePad.isEmpty()) {
       existingData = this.signaturePad.toData();
     }
 
-    // Calculate optimal dimensions
     const dimensions = this.calculateOptimalDimensions(wrapper);
     
-    // Apply dimensions to canvas element
     canvas.style.width = `${dimensions.width}px`;
     canvas.style.height = `${dimensions.height}px`;
 
-    // Scale canvas for high DPI displays
     canvas.width = dimensions.width * this.ratio;
     canvas.height = dimensions.height * this.ratio;
 
-    // Scale context to counter the HiDPI scaling
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.scale(this.ratio, this.ratio);
     }
 
-    // Restore existing data if signature pad exists and has data
     if (this.signaturePad && existingData.length > 0) {
-      // Small delay to ensure canvas is ready
       setTimeout(() => {
         this.signaturePad.fromData(existingData);
       }, 0);
@@ -140,27 +139,22 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   private calculateOptimalDimensions(wrapper: HTMLElement): { width: number; height: number } {
-    // Get available space
     const containerWidth = wrapper.clientWidth;
     const maxHeight = Math.floor(window.innerHeight * this.MAX_HEIGHT_PERCENTAGE);
     
-    // Calculate dimensions based on aspect ratio
     let width = containerWidth;
     let height = Math.floor(width / this.ASPECT_RATIO);
     
-    // Ensure height doesn't exceed maximum
     if (height > maxHeight) {
       height = maxHeight;
       width = Math.floor(height * this.ASPECT_RATIO);
     }
     
-    // Ensure minimum height
     if (height < this.MIN_HEIGHT) {
       height = this.MIN_HEIGHT;
       width = Math.floor(height * this.ASPECT_RATIO);
     }
     
-    // Ensure width doesn't exceed container
     if (width > containerWidth) {
       width = containerWidth;
       height = Math.floor(width / this.ASPECT_RATIO);
@@ -169,32 +163,27 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
     return { width, height };
   }
 
-  // Undo/Redo functionality
   private saveState(): void {
     if (!this.signaturePad) return;
 
     const currentState = this.signaturePad.toData();
     this.undoStack.push(JSON.parse(JSON.stringify(currentState)));
     
-    // Limit undo stack size
     if (this.undoStack.length > this.maxUndoSteps) {
       this.undoStack.shift();
     }
     
-    // Clear redo stack when new action is performed
     this.redoStack = [];
   }
 
   undo(): void {
     if (!this.signaturePad || this.undoStack.length <= 1) return;
 
-    // Move current state to redo stack
     const currentState = this.undoStack.pop();
     if (currentState) {
       this.redoStack.push(currentState);
     }
 
-    // Apply previous state
     const previousState = this.undoStack[this.undoStack.length - 1];
     if (previousState) {
       this.signaturePad.fromData(previousState);
@@ -204,7 +193,6 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   redo(): void {
     if (!this.signaturePad || this.redoStack.length === 0) return;
 
-    // Move state from redo to undo stack
     const stateToRedo = this.redoStack.pop();
     if (stateToRedo) {
       this.undoStack.push(stateToRedo);
@@ -223,7 +211,6 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   clear(): void {
     if (this.signaturePad) {
       this.signaturePad.clear();
-      // Reset undo/redo stacks
       this.undoStack = [];
       this.redoStack = [];
       this.saveState();
@@ -237,20 +224,16 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Get the raw SVG content using toSVG()
     const svgContent = this.signaturePad.toSVG();
 
-    // Create a blob with UTF-8 encoding
     const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
 
-    // Create a download link
     const link = document.createElement('a');
     link.download = `signature-${Date.now()}.svg`;
     link.href = url;
     link.click();
     
-    // Clean up
     window.URL.revokeObjectURL(url);
   }
 
@@ -261,32 +244,77 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Get the SVG data
     this.currentSvgData = this.signaturePad.toSVG();
     this.isSubmissionModalOpen = true;
   }
 
   convertToGCode(): void {
     if (!this.signaturePad) return;
+    if (this.isConverting) return;
     if (this.signaturePad.isEmpty()) {
       alert('Please provide a signature first.');
       return;
     }
 
-    // Get the raw SVG content using toSVG() method
     const svgContent = this.signaturePad.toSVG();
-    
+    this.startGcodeConversion(svgContent);
+  }
+
+  private startGcodeConversion(svgData: string): void {
+    this.isConverting = true;
     this.gcodeService.resetProgress();
     this.showGCodeFeedback = true;
+    this.gcodeFeedbackConfig = {
+      type: 'progress',
+      message: 'Preparing conversion...',
+      progress: 5,
+      size: 'md',
+      position: 'modal'
+    };
 
-    this.gcodeService.convertSvgToGcode(svgContent, false).subscribe({
+    this.progressSub?.unsubscribe();
+    this.progressSub = this.gcodeService.progress$.pipe(takeUntil(this.destroy$)).subscribe(progress => {
+      if (progress.status === 'uploading' || progress.status === 'processing') {
+        // Don't overwrite success/error final state if already completed
+        if (!this.showGCodeFeedback) return;
+        // Only show progress if not yet in success/error custom state with same progress subscription race
+        // Allow progress to update until completed
+        if (this.gcodeFeedbackConfig?.type === 'custom' || this.gcodeFeedbackConfig?.type === 'error') {
+          // If we already have final state, don't downgrade to progress
+          if (progress.status !== 'uploading' && progress.status !== 'processing') return;
+        }
+        // During active conversion, show progress
+        if (this.isConverting) {
+          this.gcodeFeedbackConfig = {
+            type: 'progress',
+            message: progress.message,
+            progress: progress.progress,
+            size: 'md',
+            position: 'modal'
+          };
+        }
+      } else if (progress.status === 'error') {
+        // Error is also handled in subscribe error callback; ensure message if not already set
+        if (this.isConverting && this.gcodeFeedbackConfig?.type !== 'error') {
+          this.gcodeFeedbackConfig = {
+            type: 'error',
+            message: 'Conversion Failed',
+            subMessage: progress.error || progress.message || 'Unable to process. Please try again.',
+            size: 'md',
+            position: 'modal',
+            showCloseButton: true
+          };
+        }
+      }
+    });
+
+    this.gcodeService.convertSvgToGcode(svgData, false).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
-        // console.log('G-code conversion result:', result);
-        
+        this.isConverting = false;
         this.gcodeFeedbackConfig = {
           type: 'custom',
           message: 'G-Code Generated!',
-          subMessage: `${result?.metadata?.gcode_lines} lines generated`,
+          subMessage: `${result?.metadata?.gcode_lines ?? 0} lines generated`,
           size: 'lg',
           position: 'modal',
           showCloseButton: true,
@@ -307,27 +335,15 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
         };
       },
       error: (error) => {
-        console.error('G-code conversion failed:', error);
+        this.isConverting = false;
+        const sanitized = typeof error === 'string' ? error : 'Unable to connect to the service. Please try again.';
         this.gcodeFeedbackConfig = {
           type: 'error',
           message: 'Conversion Failed',
-          subMessage: error,
+          subMessage: sanitized,
           size: 'md',
           position: 'modal',
           showCloseButton: true
-        };
-      }
-    });
-
-    // Subscribe to progress
-    this.gcodeService.progress$.subscribe(progress => {
-      if (progress.status === 'uploading' || progress.status === 'processing') {
-        this.gcodeFeedbackConfig = {
-          type: 'progress',
-          message: progress.message,
-          progress: progress.progress,
-          size: 'md',
-          position: 'modal'
         };
       }
     });
@@ -355,18 +371,17 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   onGCodeFeedbackClose(): void {
+    this.isConverting = false;
     this.showGCodeFeedback = false;
     this.gcodeFeedbackConfig = null;
+    this.progressSub?.unsubscribe();
+    this.progressSub = null;
+    this.gcodeService.resetProgress();
   }
 
   onSubmissionComplete(data: SignatureSubmissionData): void {
-    // console.log('Signature submitted successfully:', data);
     this.isSubmissionModalOpen = false;
-
-    // Optionally clear the signature pad after successful submission
     this.clear();
-
-    // Show success message
     alert('Signature submitted successfully!');
   }
 
@@ -380,60 +395,8 @@ export class SignaturePadComponent implements AfterViewInit, OnDestroy {
   }
 
   onImageSvgReady(svgData: string): void {
-    if (!svgData) return;
-
-    this.gcodeService.resetProgress();
-    this.showGCodeFeedback = true;
-
-    this.gcodeService.convertSvgToGcode(svgData, false).subscribe({
-      next: (result) => {
-        this.gcodeFeedbackConfig = {
-          type: 'custom',
-          message: 'G-Code Generated!',
-          subMessage: `${result?.metadata?.gcode_lines} lines generated`,
-          size: 'lg',
-          position: 'modal',
-          showCloseButton: true,
-          showActionButtons: true,
-          actionButtons: [
-            {
-              label: 'Download G-Code',
-              action: 'download',
-              style: 'primary',
-              icon: this.faDownload
-            }
-          ],
-          data: {
-            type: 'gcode',
-            gcode: result?.gcode,
-            metadata: result?.metadata
-          }
-        };
-      },
-      error: (error) => {
-        console.error('G-code conversion failed:', error);
-        this.gcodeFeedbackConfig = {
-          type: 'error',
-          message: 'Conversion Failed',
-          subMessage: error,
-          size: 'md',
-          position: 'modal',
-          showCloseButton: true
-        };
-      }
-    });
-
-    this.gcodeService.progress$.subscribe(progress => {
-      if (progress.status === 'uploading' || progress.status === 'processing') {
-        this.gcodeFeedbackConfig = {
-          type: 'progress',
-          message: progress.message,
-          progress: progress.progress,
-          size: 'md',
-          position: 'modal'
-        };
-      }
-    });
+    if (!svgData || this.isConverting) return;
+    this.startGcodeConversion(svgData);
   }
 
   onImageSvgCancel(): void {

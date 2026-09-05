@@ -243,11 +243,21 @@ export class DbService {
     }
   }
 
+  private sanitizeMessage(raw: string): string {
+    if (!raw) return 'An unexpected error occurred. Please try again.';
+    let s = String(raw).replace(/https?:\/\/[^\s"']+/g, '[service]');
+    s = s.replace(/Http failure response for[^:]*:\s*0\s*.*/gi, 'Unable to connect to the service. Please check your internet connection and try again.');
+    if (s.includes('http')) return 'Unable to connect to the service. Please check your internet connection and try again.';
+    return s;
+  }
+
   private getErrorMessage(error: HttpErrorResponse): string {
     if (error.error instanceof ErrorEvent) {
-      return `Error: ${error.error.message}`;
+      return this.sanitizeMessage(error.error.message);
     } else {
       switch (error.status) {
+        case 0:
+          return 'Unable to connect to the service. Please check your internet connection and try again.';
         case 400:
           return 'Invalid email address format.';
         case 403:
@@ -259,7 +269,7 @@ export class DbService {
         case 500:
           return 'Server error. Please try again later.';
         default:
-          return error.error?.details || error.message || 'An error occurred while retrieving user data';
+          return this.sanitizeMessage(error.error?.details || error.error?.message || error.message || 'An error occurred while retrieving user data');
       }
     }
   }

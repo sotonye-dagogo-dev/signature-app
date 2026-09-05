@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: append-only — never modify past entries
 
 > **Overview:** Append-only running log of development sessions.
@@ -173,5 +173,44 @@ Service-account key via `GOOGLE_APPLICATION_CREDENTIALS` is the officially recom
 
 **Notes / Blockers:**
 firebase-tools resolves auth in order: `--token` flag → `FIREBASE_TOKEN` env → local login → ADC. The service-account deploy step must therefore NOT set `FIREBASE_TOKEN`, which is why the two deploy steps are mutually exclusive.
+
+---
+
+## Session 6 — 2026-09-05
+
+**Completed:**
+Frontend hardening sprint (non-breaking, platform-wide): loading phase feedback + disabled submit states + sanitized error handling; fixed `Http failure response for https://.../api/convert: 0` backend-URL leak on image→G-code flow.
+
+- `GcodeService`: `sanitizeMessage()` + `case 0`, refactored `convertSvgToGcode` to `tap`+`filter(Response)`+`map(body)`, removed stray `processing 50%` tap
+- `EvaluationService` + `DbService`: same sanitize helper + status 0 mapping
+- `SignaturePadComponent`: added `isConverting` flag, shared `startGcodeConversion()` helper, single `progress$` subscription with `takeUntil(destroy$)`, spinner + disabled controls, proper cleanup on feedback close
+- `ImageToSvgModalComponent`: added `loadingPhase`/`loadingMessage`/`canConfirm`, disabled Change/Invert/Threshold/Confirm while processing, phase-specific messages ("Reading image...", "Converting image to SVG...", "Generating preview...")
+- `SignatureSubmissionFormComponent`: disables form while `isSubmitting` and re-enables with faculty-dependent logic
+- `EvaluationComponent`/`QueryComponent`/`FileDrop`: disabled inputs/buttons while evaluating/searching
+- Verified build passes (`710k main`, `755k initial total`, 5 prerendered routes)
+- Updated `design-system.md` UX principles, `system-architecture.md` constraints, `repair-system.md` error pattern, `memory/lessons-learned.md`, `memory/project-decisions.md`, `planning/project-plan.md`, `memory/architecture-history.md`, `summaries/dev-history.md`
+
+**Files Modified:**
+- src/app/services/gcode/gcode.service.ts — sanitize helper, status 0, convert pipeline fix
+- src/app/services/evaluation/evaluation.service.ts — sanitize helper, status 0
+- src/app/services/db/db.service.ts — sanitize helper, status 0
+- src/app/components/signature-pad/signature-pad.component.ts — isConverting, shared conversion helper, subscription management
+- src/app/components/signature-pad/signature-pad.component.html — disabled bindings + spinner/label change on convert button
+- src/app/components/signature-pad/signature-pad.component.scss — disabled opacity + spin animation
+- src/app/components/image-to-svg-modal/image-to-svg-modal.component.ts — loadingPhase, loadingMessage, canConfirm
+- src/app/components/image-to-svg-modal/image-to-svg-modal.component.html — phase loading text, disabled controls, canConfirm binding
+- src/app/components/signature-submission-form/signature-submission-form.component.ts — form disable during submit
+- src/app/pages/evaluation/evaluation.component.html — disabled file-drops, textareas, sample buttons while evaluating
+- src/app/pages/query/query.component.html — disabled search input while searching
+- ai-system/design-system.md, ai-system/system-architecture.md, ai-system/repair-system.md, ai-system/memory/lessons-learned.md, ai-system/memory/project-decisions.md, ai-system/planning/project-plan.md, ai-system/memory/architecture-history.md, ai-system/summaries/dev-history.md — docs reconciliation
+
+**Next Task:**
+Human to verify end-to-end image→G-code flow manually with a real image (backend must be reachable); backend investigation if status 0 persists (CORS/network). QA: add unit tests for `isConverting`/`loadingPhase` states, then verify `FIREBASE_SERVICE_ACCOUNT` push-to-main deploy still blocked on secret setup.
+
+**Assumptions Made:**
+No architecture change; UX fix is strictly frontend and non-breaking. Backend at `https://signatureeu.pythonanywhere.com/api/` is assumed to be intermittently reachable — status 0 is treated as client connectivity/CORS, mapped to generic message. No new dependencies introduced.
+
+**Notes / Blockers:**
+Build succeeds on Node 20 with `npm ci --legacy-peer-deps` → `ng build`. No secrets leaked. `FIREBASE_SERVICE_ACCOUNT` deploy remains blocked until human provisions the secret (independent of this sprint).
 
 ---
