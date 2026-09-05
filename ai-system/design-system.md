@@ -1,8 +1,8 @@
 # Design System
 
 > **Metadata**
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: re-verify if UI components or styling dependencies change
 
 > **Overview:** Visual language, component patterns, and UX principles. Agents building UI must read this before writing any frontend code.
@@ -87,9 +87,10 @@ Buttons on mobile (<640px): icons shown, text labels hidden.
 
 ## UX Principles
 
-1. Always show loading state for async actions (progress bar in feedback display)
+1. Always show loading state for async actions (progress bar in feedback display) and phase-specific feedback ("Reading image...", "Uploading... 30%", "Converting to G-code..."). Submit/convert/evaluate/search buttons are disabled while their async operation is in-flight and show a spinner/label change ("Converting...", "Searching...").
 2. Destructive actions (clear) require confirmation via alert
 3. Empty canvas shows alert when attempting submit/download/convert
-4. Success/error states shown in feedback display component
+4. Success/error states shown in feedback display component; error messages are sanitized to never reveal backend URLs or internal endpoints — status 0 maps to "Unable to connect to the service. Please check your internet connection and try again."
 5. Signature pad: touch-action: none for mobile, cursor: crosshair on desktop
 6. Dark mode toggle with system preference detection + localStorage persistence
+7. Image import flow: file reading → raster→SVG conversion → preview (all client-side) are distinct phases with loading spinner, threshold/invert controls disabled during processing, and "Use Image" disabled until preview is ready. G-code conversion for imported images reuses the same progress/error path as canvas drawing.

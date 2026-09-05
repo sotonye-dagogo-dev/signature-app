@@ -109,14 +109,14 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Original Image</label>
-                    <app-file-drop fileType="image" label="Drop original image here" [required]="true"
+                    <app-file-drop fileType="image" label="Drop original image here" [required]="true" [disabled]="isEvaluating"
                         (fileSelected)="onOriginalImageSelected($any($event))"
                         (validationError)="onFileValidationError($event)"></app-file-drop>
                 </div>
 
                 <div class="form-group">
                     <label>Reproduced Image</label>
-                    <app-file-drop fileType="image" label="Drop reproduced image here" [required]="true"
+                    <app-file-drop fileType="image" label="Drop reproduced image here" [required]="true" [disabled]="isEvaluating"
                         (fileSelected)="onReproducedImageSelected($any($event))"
                         (validationError)="onFileValidationError($event)"></app-file-drop>
                 </div>
@@ -127,7 +127,7 @@
         <form *ngIf="selectedMetric === 'smoothness'" [formGroup]="smoothnessForm" class="evaluation-form">
             <div class="form-group">
                 <label>Signature Image</label>
-                <app-file-drop fileType="image" label="Drop signature image here" [required]="true"
+                <app-file-drop fileType="image" label="Drop signature image here" [required]="true" [disabled]="isEvaluating"
                     (fileSelected)="onSignatureImageSelected($any($event))"
                     (validationError)="onFileValidationError($event)"></app-file-drop>
             </div>
@@ -188,16 +188,16 @@
                     <div class="toolpath-input-container">
                         <textarea formControlName="expectedToolpath"
                             placeholder="Enter expected toolpath as G-code or JSON array..." rows="10"
-                            class="toolpath-textarea"
+                            class="toolpath-textarea" [attr.disabled]="isEvaluating ? '' : null"
                             (input)="onToolpathChange('expected', $any($event.target).value)"></textarea>
 
                         <div class="input-actions">
-                            <button type="button" class="sample-button gcode-sample"
+                            <button type="button" class="sample-button gcode-sample" [disabled]="isEvaluating"
                                 (click)="insertSampleGCode('expected')">
                                 <fa-icon [icon]="faCode"></fa-icon>
                                 G-Code Sample
                             </button>
-                            <button type="button" class="sample-button json-sample"
+                            <button type="button" class="sample-button json-sample" [disabled]="isEvaluating"
                                 (click)="insertSampleToolpath('expected')">
                                 <fa-icon [icon]="faCode"></fa-icon>
                                 JSON Sample
@@ -236,16 +236,16 @@
                     <div class="toolpath-input-container">
                         <textarea formControlName="actualToolpath"
                             placeholder="Enter actual toolpath as G-code or JSON array..." rows="10"
-                            class="toolpath-textarea"
+                            class="toolpath-textarea" [attr.disabled]="isEvaluating ? '' : null"
                             (input)="onToolpathChange('actual', $any($event.target).value)"></textarea>
 
                         <div class="input-actions">
-                            <button type="button" class="sample-button gcode-sample"
+                            <button type="button" class="sample-button gcode-sample" [disabled]="isEvaluating"
                                 (click)="insertSampleGCode('actual')">
                                 <fa-icon [icon]="faCode"></fa-icon>
                                 G-Code Sample
                             </button>
-                            <button type="button" class="sample-button json-sample"
+                            <button type="button" class="sample-button json-sample" [disabled]="isEvaluating"
                                 (click)="insertSampleToolpath('actual')">
                                 <fa-icon [icon]="faCode"></fa-icon>
                                 JSON Sample

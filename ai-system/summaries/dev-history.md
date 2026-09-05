@@ -2,8 +2,8 @@
 
 > **Metadata**
 >
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: historical entries do not go stale
 
 > **Overview:** Chronological log of completed development work.
@@ -126,6 +126,32 @@ Replaced the deprecated `FIREBASE_TOKEN`-only auth with a preferred service-acco
 
 **Next Sprint Focus:**
 A human creates the service account, stores its base64 JSON key as `FIREBASE_SERVICE_ACCOUNT`, then verifies an end-to-end push-to-main deploy.
+
+---
+
+## 2026-09-05 — Frontend Hardening: Loading Phases, Disabled States, Sanitized Errors
+
+**Summary:**
+Hardened the image-upload → SVG → G-code end-to-end flow and applied platform-wide non-breaking UX fixes. Fixed the `Http failure response for https://.../api/convert: 0 Unknown Error` leak by sanitizing all service error paths to never reveal backend URLs, mapping status 0 to a friendly "Unable to connect..." message. Added phase-specific loading feedback and disabled states for every submit/convert/search/evaluate action so users never feel stuck.
+
+**Completed:**
+
+- `GcodeService`: added `sanitizeMessage()` + `case 0` handling, refactored `convertSvgToGcode` to `tap`+`filter(Response)`+`map(body)` (no null returns), removed stray `processing:50%` tap, sanitized console.error
+- `EvaluationService` & `DbService`: same sanitize helper + status 0 mapping
+- `SignaturePadComponent`: introduced `isConverting`, shared `startGcodeConversion()` helper, single `progress$` subscription with `takeUntil(destroy$)`, spinner + disabled controls on all buttons; proper cleanup on feedback close
+- `ImageToSvgModalComponent`: added `loadingPhase`/`loadingMessage`/`canConfirm`, disabled Change/Invert/Threshold/Confirm during processing
+- `SignatureSubmissionFormComponent`: disables form while `isSubmitting` and re-enables with faculty-dependent department handling
+- `EvaluationComponent` & `QueryComponent` & `FileDrop`: disabled inputs/buttons while evaluating/searching
+- Build verified (`710k main` / `755k initial total`, prerendered 5 routes)
+
+**Key Changes:**
+
+- Modified: `src/app/services/gcode/gcode.service.ts`, `src/app/services/evaluation/evaluation.service.ts`, `src/app/services/db/db.service.ts`
+- Modified: `src/app/components/signature-pad/*`, `src/app/components/image-to-svg-modal/*`, `src/app/components/signature-submission-form/*`, `src/app/pages/evaluation/*`, `src/app/pages/query/*`
+- Modified: `ai-system/design-system.md`, `ai-system/system-architecture.md`, `ai-system/repair-system.md`
+
+**Next Sprint Focus:**
+Configure `FIREBASE_SERVICE_ACCOUNT` (still pending human action) and verify push-to-main deploy; add unit tests for new `isConverting`/`loadingPhase` states.
 
 ---
 

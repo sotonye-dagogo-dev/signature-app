@@ -216,19 +216,32 @@ export class EvaluationService {
             );
     }
 
+    private sanitizeMessage(raw: string): string {
+        if (!raw) return 'An unexpected error occurred. Please try again.';
+        let s = String(raw).replace(/https?:\/\/[^\s"']+/g, '[service]');
+        s = s.replace(/Http failure response for[^:]*:\s*0\s*.*/gi, 'Unable to connect to the service. Please check your internet connection and try again.');
+        if (s.includes('http')) return 'Unable to connect to the service. Please check your internet connection and try again.';
+        return s;
+    }
+
     private handleError = (error: any) => {
-        console.error('Evaluation API Error:', error);
+        // Keep console generic to avoid leaking URLs in prod
+        console.error('Evaluation API Error:', error?.status, error?.message ? '[sanitized]' : error);
 
         let errorMessage = 'An error occurred during evaluation';
 
-        if (error.error && typeof error.error === 'object') {
+        if (error?.status === 0) {
+            errorMessage = 'Unable to connect to the evaluation service. Please check your internet connection and try again.';
+        } else if (error.error && typeof error.error === 'object') {
             if (error.error.details) {
-                errorMessage = error.error.details;
+                errorMessage = this.sanitizeMessage(String(error.error.details));
             } else if (error.error.error) {
-                errorMessage = error.error.error;
+                errorMessage = this.sanitizeMessage(String(error.error.error));
+            } else {
+                errorMessage = this.sanitizeMessage(error.message || errorMessage);
             }
         } else if (error.message) {
-            errorMessage = error.message;
+            errorMessage = this.sanitizeMessage(String(error.message));
         }
 
         return throwError(() => errorMessage);

@@ -1,8 +1,8 @@
 # System Architecture
 
 > **Metadata**
-> - last-updated-by: update-ai-system
-> - last-verified-against-code: 2026-08-01
+> - last-updated-by: execute-feature (2026-09-05 frontend hardening)
+> - last-verified-against-code: 2026-09-05
 > - staleness-policy: re-verify before trusting if any architecture-affecting commits have been made since last-verified-against-code
 
 > **Overview:** How the system is structured — layers, modules, data flow, and configuration. Agents designing or changing structure must read this first.
@@ -183,6 +183,7 @@ Canvas drawing → SVG string
 - HMAC key derivation uses AES-CBC decryption in browser (obfuscation-level security, not true security)
 - Canvas resize may lose signature data if called during active drawing
 - No offline support — all features require network access to API
+- `HttpErrorResponse` status 0 (network/CORS/offline) must be mapped to a generic user message; raw `error.message` contains the backend URL (`Http failure response for https://...`) and must never surface in UI — enforced via `sanitizeMessage()` in `GcodeService`, `EvaluationService`, `DbService`
 
 ---
 

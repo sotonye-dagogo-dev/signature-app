@@ -127,9 +127,10 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
   async onFormSubmit() {
     if (this.form.valid && !this.isSubmitting) {
       this.isSubmitting = true;
+      this.form.disable();
 
       // Get form value including disabled controls
-      const formData = { ...this.form.value, ...this.form.getRawValue() };
+      const formData = { ...this.form.getRawValue() };
 
       // Prepare submission data - exclude consent field for API
       const submissionData: SignatureSubmissionData = {
@@ -203,6 +204,11 @@ export class SignatureSubmissionFormComponent implements OnInit, OnDestroy {
         this.showFeedback = true;
       } finally {
         this.isSubmitting = false;
+        this.form.enable();
+        // Re-apply faculty dependent disable for empty faculty
+        if (!this.form.get('faculty')?.value) {
+          this.form.get('department')?.disable();
+        }
       }
     } else {
       // Mark all fields as touched to show validation errors
